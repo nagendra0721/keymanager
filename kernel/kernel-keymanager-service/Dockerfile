@@ -81,7 +81,9 @@ RUN apk update \
 && apk add --no-cache sudo \
 && addgroup -g ${container_user_gid} -S ${container_user_group} \
 && adduser -u ${container_user_uid} -G ${container_user_group} -S -h ${container_user} -D ${container_user} \
-&& echo "${container_user} ALL=(ALL) NOPASSWD:/home/${container_user}/${hsm_local_dir}/install.sh" >> /etc/sudoers 
+&& echo "${container_user} ALL=(ALL) NOPASSWD:/home/${container_user}/${hsm_local_dir}/install.sh" >> /etc/sudoers \
+&& ln -s /lib/libssl.so.3 /usr/lib/libssl.so.1.1 \
+&& ln -s /lib/libcrypto.so.3 /usr/lib/libcrypto.so.1.1
 
 # set working directory for the user
 WORKDIR /home/${container_user}
