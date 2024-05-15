@@ -350,7 +350,6 @@ public class KeymanagerUtil {
 	public CertificateParameters getCertificateParameters(X500Principal latestCertPrincipal, LocalDateTime notBefore, LocalDateTime notAfter) {
 
 		CertificateParameters certParams = new CertificateParameters();
-		try {
 		X500Name x500Name = new X500Name(latestCertPrincipal.getName());
 
 		certParams.setCommonName(IETFUtils.valueToString((x500Name.getRDNs(BCStyle.CN)[0]).getFirst().getValue()));
@@ -361,12 +360,6 @@ public class KeymanagerUtil {
 		certParams.setCountry(getParamValue(getAttributeIfExist(x500Name, BCStyle.C), country));
 		certParams.setNotBefore(notBefore);
 		certParams.setNotAfter(notAfter);
-		} catch (Throwable e) {
-			LOGGER.error(KeymanagerConstant.SESSIONID, KeymanagerConstant.CERTIFICATE_PARSE, 
-								KeymanagerConstant.CERTIFICATE_PARSE, "Error Parsing Certificate." + e.getMessage(), e);
-			throw new KeymanagerServiceException(io.mosip.kernel.keymanagerservice.constant.KeymanagerErrorConstant.CERTIFICATE_PARSING_ERROR.getErrorCode(),
-								KeymanagerErrorConstant.CERTIFICATE_PARSING_ERROR.getErrorMessage());
-		}
 		return certParams;
 	}
 
