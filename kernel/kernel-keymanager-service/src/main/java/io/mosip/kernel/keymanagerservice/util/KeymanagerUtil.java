@@ -361,7 +361,7 @@ public class KeymanagerUtil {
 		certParams.setCountry(getParamValue(getAttributeIfExist(x500Name, BCStyle.C), country));
 		certParams.setNotBefore(notBefore);
 		certParams.setNotAfter(notAfter);
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			LOGGER.error(KeymanagerConstant.SESSIONID, KeymanagerConstant.CERTIFICATE_PARSE, 
 								KeymanagerConstant.CERTIFICATE_PARSE, "Error Parsing Certificate." + e.getMessage(), e);
 			throw new KeymanagerServiceException(io.mosip.kernel.keymanagerservice.constant.KeymanagerErrorConstant.CERTIFICATE_PARSING_ERROR.getErrorCode(),
