@@ -241,7 +241,7 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 				KeymanagerConstant.GETPUBLICKEYDB);
 		LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.REFERENCEID, referenceId,
 				KeymanagerConstant.GETPUBLICKEYDB);
-		try {
+
 		String alias = null;
 		X509Certificate x509Cert = null;
 		
@@ -320,7 +320,6 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 			 * Will get application's master key information from HSM. On first request for
 			 * an applicationId and duration, will create a new keypair.
 			 */
-			
 			CertificateInfo<X509Certificate> certInfo = getCertificateFromHSM(applicationId, timeStamp, KeymanagerConstant.EMPTY);
 			X509Certificate hsmX509Cert = certInfo.getCertificate();
 			PublicKey masterPublicKey = hsmX509Cert.getPublicKey();
@@ -343,7 +342,6 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 			PrivateKeyEntry signKeyEntry = keyStore.getAsymmetricKey(masterAlias);
 			PrivateKey signPrivateKey = signKeyEntry.getPrivateKey();
 			X509Certificate signCert = (X509Certificate) signKeyEntry.getCertificate();
-			
 			X500Principal signerPrincipal = signCert.getSubjectX500Principal();
 
 			CertificateParameters certParams = keymanagerUtil.getCertificateParameters(signerPrincipal,
@@ -361,15 +359,8 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 			String uniqueIdentifier = keymanagerUtil.getUniqueIdentifier(uniqueValue);
 			dbHelper.storeKeyInAlias(applicationId, generationDateTime, referenceId, alias, expiryDateTime, certThumbprint, uniqueIdentifier);
 			keymanagerUtil.destoryKey(privateKey);
-			
 		}
 		return new CertificateInfo<>(alias, x509Cert);
-		} catch (Throwable e) {
-			LOGGER.error(KeymanagerConstant.SESSIONID, applicationId, "",
-								"Error Generating Certificate.." + e.getMessage(), e);
-			throw new KeymanagerServiceException(KeymanagerErrorConstant.NOT_VALID_SIGNATURE_KEY.getErrorCode(),
-					KeymanagerErrorConstant.NOT_VALID_SIGNATURE_KEY.getErrorMessage());
-		}
 	}
 
 	/*
