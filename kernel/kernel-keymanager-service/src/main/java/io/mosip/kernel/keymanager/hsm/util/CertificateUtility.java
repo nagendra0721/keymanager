@@ -124,7 +124,7 @@ public class CertificateUtility {
 
 	public static X509Certificate generateX509Certificate(PrivateKey signPrivateKey, PublicKey publicKey, CertificateParameters certParams, 
 						X500Principal signerPrincipal, String signAlgorithm, String providerName, boolean encKeyUsage) { 
-		
+		try {
 		X500Name certSubject = getCertificateAttributes(certParams); 
 		X500Name certIssuer = Objects.nonNull(signerPrincipal)? new X500Name(RFC4519Style.INSTANCE, signerPrincipal.getName()) : certSubject;
 		KeyUsage keyUsage = new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyCertSign);
@@ -134,17 +134,25 @@ public class CertificateUtility {
 		BasicConstraints basicConstraints = new BasicConstraints(true);
 		return generateX509Certificate(signPrivateKey, publicKey, certIssuer, certSubject, signAlgorithm, providerName, 
 									certParams.getNotBefore(), certParams.getNotAfter(), keyUsage, basicConstraints);
+		} catch (Exception e) {
+			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
+					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
+		}
 	}
 
 	public static X509Certificate generateX509Certificate(PrivateKey signPrivateKey, PublicKey publicKey, CertificateParameters certParams, 
 						X500Principal signerPrincipal, String signAlgorithm, String providerName, String encryptionKey) { 
-		
+		try {
 		X500Name certSubject = getCertificateAttributes(certParams); 
 		X500Name certIssuer = Objects.nonNull(signerPrincipal)? new X500Name(RFC4519Style.INSTANCE, signerPrincipal.getName()) : certSubject;
 		KeyUsage keyUsage = new KeyUsage(KeyUsage.keyEncipherment);
 		BasicConstraints basicConstraints = new BasicConstraints(false);
 		return generateX509Certificate(signPrivateKey, publicKey, certIssuer, certSubject, signAlgorithm, providerName, 
 									certParams.getNotBefore(), certParams.getNotAfter(), keyUsage, basicConstraints);
+		} catch (Exception e) {
+			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
+					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
+		}
 	}
 
 	/**
