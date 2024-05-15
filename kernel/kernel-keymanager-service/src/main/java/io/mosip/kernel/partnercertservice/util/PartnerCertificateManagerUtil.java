@@ -191,8 +191,9 @@ public class PartnerCertificateManagerUtil {
     
     public static CertificateParameters getCertificateParameters(X500Principal latestCertPrincipal, LocalDateTime notBefore, 
                                         LocalDateTime notAfter) {
-
+        
 		CertificateParameters certParams = new CertificateParameters();
+        try {
 		X500Name x500Name = new X500Name(latestCertPrincipal.getName());
 
         certParams.setCommonName(IETFUtils.valueToString((x500Name.getRDNs(BCStyle.CN)[0]).getFirst().getValue()));
@@ -203,6 +204,12 @@ public class PartnerCertificateManagerUtil {
         certParams.setCountry(getAttributeValueIfExist(x500Name, BCStyle.C));
 		certParams.setNotBefore(notBefore);
 		certParams.setNotAfter(notAfter);
+        } catch (Exception e) {
+            LOGGER.error(PartnerCertManagerConstants.SESSIONID, PartnerCertManagerConstants.UPLOAD_PARTNER_CERT,
+                    PartnerCertManagerConstants.PCM_UTIL, "Error getCertificateParameters."+ e.getMessage(), e);
+            throw new PartnerCertManagerException(PartnerCertManagerErrorConstants.CERTIFICATE_THUMBPRINT_ERROR.getErrorCode(),
+                    PartnerCertManagerErrorConstants.CERTIFICATE_THUMBPRINT_ERROR.getErrorMessage(), e);
+        }
         return certParams;
 	}
 
