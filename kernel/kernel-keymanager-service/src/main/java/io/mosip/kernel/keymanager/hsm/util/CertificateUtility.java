@@ -150,6 +150,7 @@ public class CertificateUtility {
 		return generateX509Certificate(signPrivateKey, publicKey, certIssuer, certSubject, signAlgorithm, providerName, 
 									certParams.getNotBefore(), certParams.getNotAfter(), keyUsage, basicConstraints);
 		} catch (Throwable e) {
+			e.printStackTrace();
 			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
 					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
 		}
