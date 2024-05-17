@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #installs the pkcs11 libraries.
 set -e
