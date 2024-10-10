@@ -208,18 +208,15 @@ public class KeymanagerDBHelper {
 	 *         referenceId with key "keyAlias"; and a list of all keyalias with
 	 *         matching timestamp with key "currentKeyAlias"
 	 */
+    @SuppressWarnings("null")
 	public Map<String, List<KeyAlias>> getKeyAliases(String applicationId, String referenceId, LocalDateTime timeStamp) {
         LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, KeymanagerConstant.GETALIAS);
         Map<String, List<KeyAlias>> hashmap = new HashMap<>();
         String appIdRefIdKey = applicationId + KeymanagerConstant.APP_REF_ID_SEP + referenceId;
-        List<KeyAlias> keyAliases = keyAliasCache.get(appIdRefIdKey);
 
-        if(keyAliases != null) {
-            keyAliases = keyAliases.stream()
-                    .sorted((alias1, alias2) -> alias1.getKeyGenerationTime().compareTo(alias2.getKeyGenerationTime()))
-                    .collect(Collectors.toList());
-        }
-        assert keyAliases != null;
+        List<KeyAlias> keyAliases = keyAliasCache.get(appIdRefIdKey).stream()
+                .sorted((alias1, alias2) -> alias1.getKeyGenerationTime().compareTo(alias2.getKeyGenerationTime()))
+                .collect(Collectors.toList());
         if (keyAliases.isEmpty()){
             LOGGER.info(KeymanagerConstant.SESSIONID, applicationId, referenceId, 
                     "Removing from Cache because empty keyAlias are getting added in Cache.");
