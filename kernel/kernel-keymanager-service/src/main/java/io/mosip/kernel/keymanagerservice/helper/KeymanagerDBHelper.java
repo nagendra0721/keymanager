@@ -8,12 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
+import org.cache2k.expiry.Expiry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -27,6 +29,7 @@ import io.mosip.kernel.keymanagerservice.entity.KeyPolicy;
 import io.mosip.kernel.keymanagerservice.entity.KeyStore;
 import io.mosip.kernel.keymanagerservice.exception.InvalidApplicationIdException;
 import io.mosip.kernel.keymanagerservice.exception.KeymanagerServiceException;
+import io.mosip.kernel.keymanagerservice.exception.NoUniqueAliasException;
 import io.mosip.kernel.keymanagerservice.logger.KeymanagerLogger;
 import io.mosip.kernel.keymanagerservice.repository.KeyAliasRepository;
 import io.mosip.kernel.keymanagerservice.repository.KeyPolicyRepository;
@@ -55,6 +58,9 @@ public class KeymanagerDBHelper {
     // added because flag because getting exception in datasync.
     @Value("${mosip.kernel.keymanager.unique.identifier.autoupdate:true}")
 	private boolean autoUpdate;
+
+    @Value("${mosip.kernel.keymanager.key.cache.expire.inMins:1440}")
+    private long cacheExpireInMins;
 
     /**
 	 * {@link KeyAliasRepository} instance
@@ -94,15 +100,24 @@ public class KeymanagerDBHelper {
 
     private Cache<String, Optional<KeyPolicy>> keyPolicyCache = null;
 
+    private Cache<String, List<KeyAlias>> keyAliasCache = null;
+
     @PostConstruct
     public void init() {
         if (autoUpdate) {
             LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, 
                         "Updating the thumbprint & key unique identifer completed.");
-            createCacheObject();
             addCertificateThumbprints();
             addKeyUniqueIdentifier();
+            LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, 
+                        "Updating the thumbprint & key unique identifer completed.");
         }
+        LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, 
+                        "Creating Cache object for key policy & Key Alias.");
+        createCacheObject();
+        createKeyAliasCacheObject();
+        LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, 
+                        "Cache object for key policy & Key Alias creation completed.");
     }
 
     private void createCacheObject() {
@@ -120,6 +135,25 @@ public class KeymanagerDBHelper {
         .build();
     }
     
+    private void createKeyAliasCacheObject() {
+        keyAliasCache = new Cache2kBuilder<String, List<KeyAlias>>() {}
+        // added hashcode because test case execution failing with IllegalStateException: Cache already created
+        .name("keyAliasCache-" + this.hashCode()) 
+        .expireAfterWrite(cacheExpireInMins, TimeUnit.MINUTES)
+        .entryCapacity(500)
+        .refreshAhead(true)
+        .loaderThreadCount(1)
+        .loader((appIdRefId) -> {
+                LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, 
+                            "Fetching Key Alias for Application Id & Reference Id (Cache): " + appIdRefId);
+                String[] appIdRefIdArr = appIdRefId.split(KeymanagerConstant.APP_REF_ID_SEP, -1);
+                LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, 
+                            "Key Alias for Application Id: " + appIdRefIdArr[0] + ", Reference Id (Cache): " 
+                            + appIdRefIdArr[1]);
+                return keyAliasRepository.findByApplicationIdAndReferenceId(appIdRefIdArr[0], appIdRefIdArr[1]);
+        })
+        .build();
+    }
     /**
 	 * Function to store key in keyalias table
 	 * 
@@ -141,6 +175,7 @@ public class KeymanagerDBHelper {
         keyAlias.setCertThumbprint(certThumbprint);
         keyAlias.setUniqueIdentifier(uniqueIdentifier);
         keyAliasRepository.saveAndFlush(keymanagerUtil.setMetaData(keyAlias));
+        purgeKeyAliasCache(applicationId, referenceId);
     }
 
     /**
@@ -174,10 +209,23 @@ public class KeymanagerDBHelper {
 	public Map<String, List<KeyAlias>> getKeyAliases(String applicationId, String referenceId, LocalDateTime timeStamp) {
         LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, KeymanagerConstant.GETALIAS);
         Map<String, List<KeyAlias>> hashmap = new HashMap<>();
-        List<KeyAlias> keyAliases = keyAliasRepository.findByApplicationIdAndReferenceId(applicationId, referenceId)
-                .stream()
-                .sorted((alias1, alias2) -> alias1.getKeyGenerationTime().compareTo(alias2.getKeyGenerationTime()))
-                .collect(Collectors.toList());
+        List<KeyAlias> keyAliases = null;
+        if (!applicationId.equals(KeymanagerConstant.PARTNER_APP_ID)) {
+            String appIdRefIdKey = applicationId + KeymanagerConstant.APP_REF_ID_SEP + referenceId;
+            keyAliases = keyAliasCache.get(appIdRefIdKey).stream()
+                    .sorted((alias1, alias2) -> alias1.getKeyGenerationTime().compareTo(alias2.getKeyGenerationTime()))
+                    .collect(Collectors.toList());
+            if (keyAliases.isEmpty()){
+                LOGGER.info(KeymanagerConstant.SESSIONID, applicationId, referenceId, 
+                        "Removing from Cache because empty keyAlias are getting added in Cache.");
+                keyAliasCache.expireAt(appIdRefIdKey, Expiry.NOW);
+            }
+        } else {
+            keyAliases = keyAliasRepository.findByApplicationIdAndReferenceId(applicationId, referenceId)
+                                           .stream()
+                                           .sorted((alias1, alias2) -> alias1.getKeyGenerationTime().compareTo(alias2.getKeyGenerationTime()))
+                                           .collect(Collectors.toList());
+        }
         int preExpireDays = getPreExpireDays(applicationId, referenceId);
         LOGGER.info(KeymanagerConstant.SESSIONID, applicationId, referenceId, "PreExpireDays found as key policy:" + preExpireDays);
         List<KeyAlias> currentKeyAliases = keyAliases.stream()
@@ -452,5 +500,13 @@ public class KeymanagerDBHelper {
             return 30;
         }
         return encKeyPolicy.get().getPreExpireDays();
+    }
+
+    private void purgeKeyAliasCache(String applicationId, String referenceId) {
+        String appIdRefIdKey = applicationId + KeymanagerConstant.APP_REF_ID_SEP + referenceId;
+        LOGGER.info(KeymanagerConstant.SESSIONID, applicationId, referenceId, 
+                    "Purging from Cache because new key generated or new certificate uploaded." +
+                    "AppId & RefId: " + appIdRefIdKey);
+            keyAliasCache.expireAt(appIdRefIdKey, Expiry.NOW);
     }
 }
