@@ -208,7 +208,7 @@ public class KeymanagerDBHelper {
 	 *         referenceId with key "keyAlias"; and a list of all keyalias with
 	 *         matching timestamp with key "currentKeyAlias"
 	 */
-    @SuppressWarnings("null")
+    @SuppressWarnings({"JAVA:S2221","JAVA:S2699", "null"}) //Suppress the potential NullPointer exception 
 	public Map<String, List<KeyAlias>> getKeyAliases(String applicationId, String referenceId, LocalDateTime timeStamp) {
         LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY, KeymanagerConstant.GETALIAS);
         Map<String, List<KeyAlias>> hashmap = new HashMap<>();
