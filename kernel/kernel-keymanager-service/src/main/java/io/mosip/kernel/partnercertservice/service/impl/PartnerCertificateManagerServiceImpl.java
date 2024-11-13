@@ -622,7 +622,7 @@ public class PartnerCertificateManagerServiceImpl implements PartnerCertificateM
     public void purgeTrustStoreCache(String partnerDomain) {
         purgeCache(partnerDomain);
         LOGGER.info(PartnerCertManagerConstants.SESSIONID, PartnerCertManagerConstants.UPLOAD_PARTNER_CERT, PartnerCertManagerConstants.EMPTY,
-                "Trust Store Cache Purge for partner domain " + partnerDomain);
+                "Trust Store Cache Purge for partner vv domain " + partnerDomain);
     }
 
     private void purgeCache(String partnerDomain) {
