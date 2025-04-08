@@ -136,8 +136,8 @@ jobs:
       SERVICE_LOCATION: kernel/kernel-keymanager-service
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v1
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v4
         with:
           name: release
           path: ./
