@@ -29,6 +29,7 @@ import io.mosip.kernel.signature.constant.SignatureAlgorithmIdentifyEnum;
 import io.mosip.kernel.signature.constant.SignatureProviderEnum;
 import io.mosip.kernel.signature.dto.*;
 import io.mosip.kernel.signature.service.SignatureServicev2;
+import io.mosip.kernel.keymanagerservice.constant.ECCurves;
 import org.apache.commons.codec.binary.Base64;
 import org.jose4j.jca.ProviderContext;
 import org.jose4j.jwa.AlgorithmFactory;
@@ -124,6 +125,9 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 	@Value("${mosip.kernel.keymanager.signature.kid.prepend:}")
 	private String kidPrepend;
 
+	@Value("${mosip.sign-certificate-refid:SIGN}")
+	private String certificateSignRefID;
+
 	/**
 	 * Utility to generate Metadata
 	 */
@@ -160,11 +164,12 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 
 	private static Map<String, String> JWT_SIGNATURE_ALGO_IDENT = new HashMap<>();
 	static {
-		JWT_SIGNATURE_ALGO_IDENT.put(SignatureConstant.BLANK, AlgorithmIdentifiers.RSA_USING_SHA256);
-		JWT_SIGNATURE_ALGO_IDENT.put(SignatureConstant.REF_ID_SIGN_CONST, AlgorithmIdentifiers.RSA_USING_SHA256);
+		JWT_SIGNATURE_ALGO_IDENT.put(KeymanagerConstant.RSA, AlgorithmIdentifiers.RSA_USING_SHA256);
 		JWT_SIGNATURE_ALGO_IDENT.put(KeyReferenceIdConsts.EC_SECP256K1_SIGN.name(), AlgorithmIdentifiers.ECDSA_USING_SECP256K1_CURVE_AND_SHA256);
 		JWT_SIGNATURE_ALGO_IDENT.put(KeyReferenceIdConsts.EC_SECP256R1_SIGN.name(), AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
 		JWT_SIGNATURE_ALGO_IDENT.put(KeyReferenceIdConsts.ED25519_SIGN.name(), AlgorithmIdentifiers.EDDSA);
+		JWT_SIGNATURE_ALGO_IDENT.put(ECCurves.SECP256R1.name(), AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
+		JWT_SIGNATURE_ALGO_IDENT.put(ECCurves.SECP256K1.name(), AlgorithmIdentifiers.ECDSA_USING_SECP256K1_CURVE_AND_SHA256);
 	}
 
     // ---- FAST PATH CACHES ----
