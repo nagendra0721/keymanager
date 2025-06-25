@@ -321,7 +321,7 @@ public class KeymanagerUtil {
 			encryptedSymmetricKey = cryptoCore.asymmetricEncrypt(masterKey, symmetricKey.getEncoded());
 			encryptedKey = CryptoUtil.combineByteArray(encryptedPrivateKey, encryptedSymmetricKey, keySplitter);
 		} else {
-			encryptedKey = ecCryptoOperation.asymmetricEcEncrypt(masterKey, privateKey.getEncoded(), ecCurveName);
+			encryptedKey = ecCryptoOperation.asymmetricEcEncrypt(masterKey, privateKey.getEncoded(), getEcCurveName(masterKey));
 		}
 		return encryptedKey;
 	}
