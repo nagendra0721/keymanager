@@ -32,7 +32,7 @@ public class JWSSignatureRequestDtoV2 {
     /**
      * additional Header parameters
      */
-    @ApiModelProperty(notes = "Map of additional parameters to be included in JWT Signature Header", required = false)
+    @ApiModelProperty(notes = "Map of additional Headers to be included in JWT Signature Header", required = false)
     private Map<String, String> additionalHeaders;
 
     /**
