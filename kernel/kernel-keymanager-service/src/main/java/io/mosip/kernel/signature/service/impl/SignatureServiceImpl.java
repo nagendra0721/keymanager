@@ -621,8 +621,8 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 			if (!validCert) {
 				LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
 					"Error certificate dates are not valid.");
-					throw new CertificateNotValidException(SignatureErrorCode.CERT_NOT_VALID.getErrorCode(),
-								SignatureErrorCode.CERT_NOT_VALID.getErrorMessage());
+//					throw new CertificateNotValidException(SignatureErrorCode.CERT_NOT_VALID.getErrorCode(),
+//								SignatureErrorCode.CERT_NOT_VALID.getErrorMessage());
 			}
 
 			String keyAlgorithm = x509CertToVerify.getPublicKey().getAlgorithm();
