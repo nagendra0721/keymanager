@@ -67,6 +67,10 @@ public class KeyGenerator {
 	@Value("${mosip.kernel.keygenerator.asymmetric.ed25519.algorithm-name:Ed25519}")
 	private String asymmetricEDKeyAlgorithm;
 
+    /** ECC algorithm curve name */
+    @Value("${mosip.kernel.keygenerator.ecc-curve-name:SECP256R1}")
+    private String eccCurve;
+
 	@Autowired
 	private ECKeyStore keyStore;
 
@@ -84,7 +88,7 @@ public class KeyGenerator {
 	/**
 	 * This method generated Asymmetric key pairs
 	 * 
-	 * @return {@link KeyPair} which contain public nad private key
+	 * @return {@link KeyPair} which contain public and private key
 	 */
 	public KeyPair getAsymmetricKey() {
 		KeyPairGenerator generator = KeyGeneratorUtils.getKeyPairGenerator(asymmetricKeyAlgorithm, asymmetricKeyLength, 
@@ -119,4 +123,23 @@ public class KeyGenerator {
 		return secureRandom;
 	}
 
+    /**
+     * This method generated Asymmetric key pairs for ECC
+     *
+     * @return {@link KeyPair} which contain public and private key
+     */
+    public KeyPair getECKeyPair() {
+        KeyPairGenerator generator = KeyGeneratorUtils.getECKeyPairGenerator(asymmetricKeyAlgorithm, eccCurve, getSecureRandom());
+        return generator.generateKeyPair();
+    }
+
+    /**
+     * This method generated Asymmetric key pairs for X25519
+     *
+     * @return {@link java.security.KeyPair} which contain public and private
+     */
+    public KeyPair getX25519KeyPair() {
+        KeyPairGenerator generator = KeyGeneratorUtils.getX25519KeyPairGenerator(getSecureRandom());
+        return generator.generateKeyPair();
+    }
 }

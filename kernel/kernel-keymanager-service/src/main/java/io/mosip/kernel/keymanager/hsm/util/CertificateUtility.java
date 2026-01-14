@@ -102,10 +102,10 @@ public class CertificateUtility {
 			ExtendedCertificateParameters extendedCertParams = (ExtendedCertificateParameters) certParams;
 			List<SubjectAlternativeNamesDto> sanDtoList = extendedCertParams.getSubjectAlternativeNames();
 			GeneralName[] sanArray = getCertificateSAN(sanDtoList, publicKey);
-			return generateX509Certificate(signPrivateKey, publicKey, certIssuer, certSubject, signAlgorithm, providerName,
+			return generateX509Certificate(signPrivateKey, publicKey, certIssuer, certSubject, getSignatureAlgorithm(signPrivateKey), providerName,
 					certParams.getNotBefore(), certParams.getNotAfter(), keyUsage, basicConstraints, sanArray);
 		}else {
-			return generateX509Certificate(signPrivateKey, publicKey, certIssuer, certSubject, signAlgorithm, providerName,
+			return generateX509Certificate(signPrivateKey, publicKey, certIssuer, certSubject, getSignatureAlgorithm(signPrivateKey), providerName,
 					certParams.getNotBefore(), certParams.getNotAfter(), keyUsage, basicConstraints);
 		}
 	}
@@ -116,7 +116,7 @@ public class CertificateUtility {
 		try {
 			BigInteger certSerialNum = new BigInteger(Long.toString(new SecureRandom().nextLong()));
 
-			ContentSigner certContentSigner = new JcaContentSignerBuilder(signAlgorithm).setProvider(providerName).build(signPrivateKey);
+			ContentSigner certContentSigner = new JcaContentSignerBuilder(getSignatureAlgorithm(signPrivateKey)).setProvider(providerName).build(signPrivateKey);
 			X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(certIssuer, certSerialNum, getDateFromLocalDateTime(notBefore),
 													getDateFromLocalDateTime(notAfter), certSubject, publicKey);
 			JcaX509ExtensionUtils certExtUtils = new JcaX509ExtensionUtils();
@@ -124,7 +124,7 @@ public class CertificateUtility {
 			certBuilder.addExtension(Extension.subjectKeyIdentifier, false, certExtUtils.createSubjectKeyIdentifier(publicKey));
 			certBuilder.addExtension(Extension.keyUsage, true, keyUsage);
 			X509CertificateHolder certHolder = certBuilder.build(certContentSigner);
-			return new JcaX509CertificateConverter().getCertificate(certHolder);
+			return new JcaX509CertificateConverter().setProvider(providerName).getCertificate(certHolder);
 		} catch (OperatorCreationException | NoSuchAlgorithmException | CertificateException | IOException e) {
 			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
 					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
@@ -148,7 +148,7 @@ public class CertificateUtility {
 				certBuilder.addExtension(Extension.subjectAlternativeName, false, new GeneralNames(altNames));
 			}
 			X509CertificateHolder certHolder = certBuilder.build(certContentSigner);
-			return new JcaX509CertificateConverter().getCertificate(certHolder);
+			return new JcaX509CertificateConverter().setProvider(providerName).getCertificate(certHolder);
 		} catch (OperatorCreationException | NoSuchAlgorithmException | CertificateException | IOException e) {
 			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
 					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
@@ -286,4 +286,19 @@ public class CertificateUtility {
 			throw new RuntimeException(e);
 		}
 	}
+
+    private static String getSignatureAlgorithm(PrivateKey privateKey) {
+
+        String keyAlgorithm = privateKey.getAlgorithm();
+        if (keyAlgorithm.equals(KeymanagerConstant.EC_KEY_TYPE))
+            return io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.EC_SIGN_ALGORITHM;
+        else if (keyAlgorithm.equals(KeymanagerConstant.ED25519_KEY_TYPE) ||
+                keyAlgorithm.equals(KeymanagerConstant.ED25519_ALG_OID) ||
+                keyAlgorithm.equals(KeymanagerConstant.EDDSA_KEY_TYPE))
+            return io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.ED_SIGN_ALGORITHM;
+        else if (keyAlgorithm.equals(KeymanagerConstant.X25519_KEY_TYPE))
+            return KeymanagerConstant.X25519_KEY_TYPE;
+
+        return io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.RSA_SIGN_ALGORITHM;
+    }
 }

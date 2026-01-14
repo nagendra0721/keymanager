@@ -145,6 +145,14 @@ public interface KeymanagerService {
 	 * @return {@link CertificateChainResponseDto} instance
 	 */
 	public CertificateChainResponseDto getCertificateChain(String applicationId, Optional<String> referenceId);
-	
+
+    /**
+     * Function to generate RSA key for the provided app id and ref id.
+     *
+     * @param objectType - return Object type can be a certificate or CSR
+     * @param request - request details like appId, refIds, etc.
+     * @return {@link KeyPairGenerateResponseDto} instance
+     */
+    public KeyPairGenerateResponseDto generateRSASignKey(String objectType, KeyPairGenerateRequestDto request);
 }
 
