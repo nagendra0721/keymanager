@@ -81,6 +81,8 @@ public enum KeymanagerErrorConstant {
 
 	INVALID_FORMAT_ERROR("KER-KMS-036", "Unsupported output format for the signature"),
 
+    X25519_KEY_CSR_NOT_SUPPORTED("KER-KMS-037", "CSR Certificate generation is Not Supported for X25519 Algorithm"),
+
 	INTERNAL_SERVER_ERROR("KER-KMS-500", "Internal server error");
 
 	/**

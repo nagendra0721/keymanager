@@ -137,8 +137,11 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
 
     private String signCose1(byte[] cosePayload, SignatureCertificate certificateResponse, String referenceId, CoseSignRequestDto requestDto, boolean isCwt) {
         try {
+            String algStr = SignatureUtil.isDataValid(requestDto.getAlgorithm())
+                    ? requestDto.getAlgorithm()
+                    : SignatureUtil.getAlgorithmString(certificateResponse.getCertificateEntry().getChain()[0], referenceId);
             String algorithm = (requestDto.getAlgorithm() == null || requestDto.getAlgorithm().isEmpty()) ?
-                    SignatureAlgorithmIdentifyEnum.getAlgorithmIdentifier(referenceId) : requestDto.getAlgorithm();
+                    SignatureAlgorithmIdentifyEnum.getAlgorithmIdentifier(algStr) : requestDto.getAlgorithm();
             COSEProtectedHeaderBuilder protectedHeaderBuilder = coseHeaderBuilder.buildProtectedHeader(certificateResponse, requestDto, getCoseAlgorithm(algorithm), signatureUtil);
             COSEUnprotectedHeaderBuilder unprotectedHeaderBuilder = coseHeaderBuilder.buildUnprotectedHeader(certificateResponse, requestDto, signatureUtil);
             String keyId = getKeyId(kidPrepend, certificateResponse, requestDto, includeKeyId);

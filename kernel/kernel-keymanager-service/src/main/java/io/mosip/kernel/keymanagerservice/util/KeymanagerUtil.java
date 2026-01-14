@@ -46,6 +46,8 @@ import javax.security.auth.x500.X500Principal;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.kernel.core.keymanager.spi.KeyStore;
+import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
+import io.mosip.kernel.keymanagerservice.constant.ECCurves;
 import io.mosip.kernel.keymanagerservice.dto.ExtendedCertificateParameters;
 import io.mosip.kernel.keymanagerservice.dto.SubjectAlternativeNamesDto;
 import io.mosip.kernel.keymanagerservice.dto.*;
@@ -62,6 +64,7 @@ import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -198,6 +201,10 @@ public class KeymanagerUtil {
 
 	@Value("${mosip.sign-certificate-refid:SIGN}")
 	private String certificateSignRefID;
+
+    @Value("${mosip.kernel.keygenerator.ecc-curve-name:SECP256R1}")
+    private String ecCurveName;
+
 	/**
 	 * KeyGenerator instance to generate asymmetric key pairs
 	 */
@@ -222,6 +229,9 @@ public class KeymanagerUtil {
 	@Autowired
 	@Lazy
 	KeymanagerService keymanagerService;
+
+    @Autowired
+    private EcCryptomanagerService ecCryptomanagerService;
 
 	ObjectMapper objectMapper = new ObjectMapper();
 
@@ -304,10 +314,18 @@ public class KeymanagerUtil {
 	 * @return encrypted key
 	 */
 	public byte[] encryptKey(PrivateKey privateKey, PublicKey masterKey) {
-		SecretKey symmetricKey = keyGenerator.getSymmetricKey();
-		byte[] encryptedPrivateKey = cryptoCore.symmetricEncrypt(symmetricKey, privateKey.getEncoded(), null);
-		byte[] encryptedSymmetricKey = cryptoCore.asymmetricEncrypt(masterKey, symmetricKey.getEncoded());
-		return CryptoUtil.combineByteArray(encryptedPrivateKey, encryptedSymmetricKey, keySplitter);
+        byte[] encryptedSymmetricKey;
+        byte[] encryptedKey = null;
+
+        if (masterKey.getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA)) {
+            SecretKey symmetricKey = keyGenerator.getSymmetricKey();
+            byte[] encryptedPrivateKey = cryptoCore.symmetricEncrypt(symmetricKey, privateKey.getEncoded(), null);
+            encryptedSymmetricKey = cryptoCore.asymmetricEncrypt(masterKey, symmetricKey.getEncoded());
+            encryptedKey = CryptoUtil.combineByteArray(encryptedPrivateKey, encryptedSymmetricKey, keySplitter);
+        } else {
+            encryptedKey = ecCryptomanagerService.asymmetricEcEncrypt(masterKey, privateKey.getEncoded(), getEcCurveName(masterKey));
+        }
+        return encryptedKey;
 	}
 
 	/**
@@ -322,17 +340,20 @@ public class KeymanagerUtil {
 	}
 
 	public byte[] decryptKey(byte[] key, PrivateKey privateKey, PublicKey publicKey, String keystoreType) {
-
-		int keyDemiliterIndex = 0;
-		final int cipherKeyandDataLength = key.length;
-		final int keySplitterLength = keySplitter.length();
-		keyDemiliterIndex = CryptoUtil.getSplitterIndex(key, keyDemiliterIndex, keySplitter);
-		byte[] encryptedKey = copyOfRange(key, 0, keyDemiliterIndex);
-		byte[] encryptedData = copyOfRange(key, keyDemiliterIndex + keySplitterLength, cipherKeyandDataLength);
-		byte[] decryptedSymmetricKey = cryptoCore.asymmetricDecrypt(privateKey, publicKey, encryptedKey, keystoreType);
-		SecretKey symmetricKey = new SecretKeySpec(decryptedSymmetricKey, 0, decryptedSymmetricKey.length,
-				symmetricAlgorithmName);
-		return cryptoCore.symmetricDecrypt(symmetricKey, encryptedData, null);
+        if (privateKey.getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA)) {
+            int keyDemiliterIndex = 0;
+            final int cipherKeyandDataLength = key.length;
+            final int keySplitterLength = keySplitter.length();
+            keyDemiliterIndex = CryptoUtil.getSplitterIndex(key, keyDemiliterIndex, keySplitter);
+            byte[] encryptedKey = copyOfRange(key, 0, keyDemiliterIndex);
+            byte[] encryptedData = copyOfRange(key, keyDemiliterIndex + keySplitterLength, cipherKeyandDataLength);
+            byte[] decryptedSymmetricKey = cryptoCore.asymmetricDecrypt(privateKey, publicKey, encryptedKey, keystoreType);
+            SecretKey symmetricKey = new SecretKeySpec(decryptedSymmetricKey, 0, decryptedSymmetricKey.length,
+                    symmetricAlgorithmName);
+            return cryptoCore.symmetricDecrypt(symmetricKey, encryptedData, null);
+        } else {
+            return ecCryptomanagerService.asymmetricEcDecrypt(privateKey, key, null, getEcCurveName(publicKey));
+        }
 	}
 
 	/**
@@ -594,7 +615,10 @@ public class KeymanagerUtil {
 												", O=" + certParams.getOrganization() + ", L=" + certParams.getLocation() +
 												", S=" + certParams.getState() + ", C=" + certParams.getCountry());
             ContentSigner contentSigner;
-            if (privateKey.getAlgorithm().equals(KeymanagerConstant.ED25519_KEY_TYPE)) {
+            String privateKeyAlgo = privateKey.getAlgorithm();
+            if (privateKeyAlgo.equals(KeymanagerConstant.ED25519_KEY_TYPE) || 
+                privateKeyAlgo.equals(KeymanagerConstant.X25519_KEY_TYPE) ||
+                keyAlgorithm.equals(KeymanagerConstant.X25519_KEY_TYPE)) {
                 contentSigner = new JcaContentSignerBuilder(edSignAlgorithm).build(privateKey);
             } else {
                 contentSigner = new JcaContentSignerBuilder(getSignatureAlgorithm(keyAlgorithm)).setProvider(keyStore.getKeystoreProviderName()).build(privateKey);
@@ -614,7 +638,8 @@ public class KeymanagerUtil {
 			return ecSignAlgorithm;
 		else if (keyAlgorithm.equals(KeymanagerConstant.ED25519_KEY_TYPE) || 
 				 keyAlgorithm.equals(KeymanagerConstant.ED25519_ALG_OID) || 
-				 keyAlgorithm.equals(KeymanagerConstant.EDDSA_KEY_TYPE)) 
+				 keyAlgorithm.equals(KeymanagerConstant.EDDSA_KEY_TYPE) ||
+				 keyAlgorithm.equals(KeymanagerConstant.X25519_KEY_TYPE)) 
 			return edSignAlgorithm;
 
 		return signAlgorithm;
@@ -776,4 +801,28 @@ public class KeymanagerUtil {
 				"Purging Key alias Trust Anchors Cache because new key generated or new certificate uploaded.");
 		keyAliasTrustAnchorsCache.expireAt("default", Expiry.NOW);
 	}
+
+    public String getEcCurveName(PublicKey publicKey) {
+        if (publicKey.getAlgorithm().equals(KeymanagerConstant.ED25519_KEY_TYPE) ||
+                publicKey.getAlgorithm().equals(KeymanagerConstant.EDDSA_KEY_TYPE))
+            return KeymanagerConstant.ED25519_KEY_TYPE;
+
+        if (publicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE))
+            return KeymanagerConstant.X25519_KEY_TYPE;
+
+        SubjectPublicKeyInfo subjectPublicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
+        ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier) subjectPublicKeyInfo.getAlgorithm().getParameters();
+        String curveName;
+        if (KeymanagerConstant.EC_SECP256R1_OID.equals(oid.getId())) {
+            curveName = ECCurves.SECP256R1.name();
+        } else if (KeymanagerConstant.EC_SECP256K1_OID.equals(oid.getId())) {
+            curveName = ECCurves.SECP256K1.name();
+        } else {
+            throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(
+                    KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorCode(),
+                    KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorMessage()
+            );
+        }
+        return curveName;
+    }
 }
