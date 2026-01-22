@@ -410,10 +410,10 @@ public class KeyMigratorServiceImpl implements KeyMigratorService {
             }
         } else {
             try {
-                byte[] secreteDataBytes = ecCrypto.asymmetricEcDecrypt(tempPrivateKey, encryptedKeyBytes, null, keymanagerUtil.getEcCurveName(tempPublicKey));
+                byte[] secretDataBytes = ecCrypto.asymmetricEcDecrypt(tempPrivateKey, encryptedKeyBytes, null, keymanagerUtil.getEcCurveName(tempPublicKey));
                 Cipher cipher = Cipher.getInstance(aesECBTransformation);
                 cipher.init(Cipher.ENCRYPT_MODE, zkMasterKey);
-                return cipher.doFinal(secreteDataBytes, 0, secreteDataBytes.length);
+                return cipher.doFinal(secretDataBytes, 0, secretDataBytes.length);
             } catch (NoSuchAlgorithmException | InvalidKeyException | NoSuchPaddingException
                      | IllegalBlockSizeException | BadPaddingException | IllegalArgumentException
                      | InvalidDataException | io.mosip.kernel.core.crypto.exception.InvalidKeyException e) {

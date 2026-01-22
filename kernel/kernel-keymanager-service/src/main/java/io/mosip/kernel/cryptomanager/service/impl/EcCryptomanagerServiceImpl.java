@@ -52,7 +52,6 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
 
     private static final String BC_PROVIDER = "BC";
 
-
     @Override
     public byte[] asymmetricEcEncrypt(PublicKey key, byte[] data, String curveName) {
         Objects.requireNonNull(key, SecurityExceptionCodeConstant.MOSIP_INVALID_KEY_EXCEPTION.getErrorMessage());
@@ -123,8 +122,8 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
             }
             if (ephemeralKeyPair != null) {
                 destroyKey(ephemeralKeyPair.getPrivate().getEncoded());
+                destroyKey(ephemeralKeyPair.getPublic().getEncoded());
             }
-            if (ephemeralKeyPair.getPrivate() != null) destroyKey(ephemeralKeyPair.getPublic().getEncoded());
         }
         return output;
     }
@@ -133,7 +132,9 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
     public byte[] asymmetricEcDecrypt(PrivateKey privateKey, byte[] data, byte[] aad, String algorithmName) {
         Objects.requireNonNull(privateKey, SecurityExceptionCodeConstant.MOSIP_INVALID_KEY_EXCEPTION.getErrorMessage());
         CryptoUtils.verifyData(data);
-        byte[] decryptedData = null;
+        byte[] decryptedData;
+        byte[] aesKeyBytes = null;
+        byte[] sharedSecret = null;
 
         try {
             byte[] keySplitterBytes = keySplitter.getBytes();
@@ -152,9 +153,9 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
 
             PublicKey ephemeralPublicKey = getAlgorithmBasedEphemeralPublicKey(ephemeralPublicKeyBytes, privateKey.getAlgorithm());
             KeyAgreement keyAgreement = getKeyAgreementAlorithmBased(ephemeralPublicKey, privateKey, privateKey.getAlgorithm());
-            byte[] sharedSecret = keyAgreement.generateSecret();
+            sharedSecret = keyAgreement.generateSecret();
 
-            byte[] aesKeyBytes = getHkdfKeyBytes(sharedSecret, iv, reason.getBytes(), AES_KEY_LENGTH);
+            aesKeyBytes = getHkdfKeyBytes(sharedSecret, iv, reason.getBytes(), AES_KEY_LENGTH);
             SecretKey aesKey = new SecretKeySpec(aesKeyBytes, 0, AES_KEY_LENGTH, AES);
 
             Cipher aesCipher = Cipher.getInstance(symmetricAlgorithmName);
@@ -164,7 +165,6 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
                 aesCipher.updateAAD(aad);
             }
             decryptedData = aesCipher.doFinal(cipherText);
-
         } catch (java.security.NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException e) {
             throw new NoSuchAlgorithmException(
                     SecurityExceptionCodeConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorCode(),
@@ -177,6 +177,12 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
             throw new InvalidKeyException(
                     SecurityExceptionCodeConstant.MOSIP_INVALID_PARAM_SPEC_EXCEPTION.getErrorCode(),
                     SecurityExceptionCodeConstant.MOSIP_INVALID_PARAM_SPEC_EXCEPTION.getErrorMessage(), e);
+        } finally {
+            if (aesKeyBytes != null)
+                destroyKey(aesKeyBytes);
+
+            if (sharedSecret != null)
+                destroyKey(sharedSecret);
         }
         return decryptedData;
     }
@@ -241,10 +247,10 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
                 bytegenerated += bytesToCopy;
 
                 previousBlock = block;
-                System.out.println("Number of iterations: " + (i + 1) + ", Bytes generated so far: " + bytegenerated);
+                LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.WHITESPACE, CryptomanagerConstant.WHITESPACE,
+                        "Number of iterations: " + (i + 1) + ", Bytes generated so far: " + bytegenerated);
             }
             return result;
-
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(
                     SecurityExceptionCodeConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorCode(),
@@ -270,7 +276,7 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
                 ephemeralKeyPairGen.initialize(ecGenParameterSpec);
                 return ephemeralKeyPairGen.generateKeyPair();
             }
-        }  catch (InvalidAlgorithmParameterException | java.security.NoSuchAlgorithmException | NoSuchProviderException e) {
+        } catch (InvalidAlgorithmParameterException | java.security.NoSuchAlgorithmException | NoSuchProviderException e) {
             throw new NoSuchAlgorithmException(
                     SecurityExceptionCodeConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorCode(),
                     SecurityExceptionCodeConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorMessage(), e);
