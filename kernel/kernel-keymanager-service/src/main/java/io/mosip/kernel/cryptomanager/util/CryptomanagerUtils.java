@@ -101,10 +101,6 @@ public class CryptomanagerUtils {
 	@Value("${mosip.kernel.keymanager.jwtEncrypt.validate.json:true}")
 	private boolean confValidateJson;
 
-    /** The sign applicationid. */
-    @Value("${mosip.sign.applicationid:KERNEL}")
-    private String signApplicationid;
-
     @Value("${mosip.sign-certificate-refid:SIGN}")
     private String certificateSignRefID;
 
@@ -459,7 +455,7 @@ public class CryptomanagerUtils {
             Certificate masterCert = masterKeyEntry.getCertificate();
             return new Object[] {masterPrivateKey, masterCert};
 
-        } else if ((appId.equalsIgnoreCase(signApplicationid) && refId.isPresent()
+        } else if ((appId.equalsIgnoreCase(signApplicationId) && refId.isPresent()
                 && refId.get().equals(certificateSignRefID)) ||
                 (refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256K1_SIGN.name())) ||
                 (refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256R1_SIGN.name())) ||
@@ -525,14 +521,15 @@ public class CryptomanagerUtils {
             keyFactory = KeyFactory.getInstance(algorithmName);
             privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(decryptedPrivateKey));
         } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new CryptoManagerSerivceException(CryptomanagerErrorCode.UNSUPPORTED_EC_CURVE.getErrorCode(),
+                    CryptomanagerErrorCode.UNSUPPORTED_EC_CURVE.getErrorMessage() + e.getMessage());
         }
         Certificate certificate = keymanagerUtil.convertToCertificate(dbKeyStore.getCertificateData());
         return new Object[]{privateKey, certificate};
     }
 
     public byte[] getHeaderByte(String ecCurveName) {
-        byte[] headerBytes = new byte[0];
+        byte[] headerBytes;
         if (ecCurveName.equalsIgnoreCase(CryptomanagerConstant.EC_SECP256R1)) {
             headerBytes = CryptomanagerConstant.VERSION_EC256_R1;
         } else if (ecCurveName.equalsIgnoreCase(CryptomanagerConstant.EC_SECP256K1)) {
