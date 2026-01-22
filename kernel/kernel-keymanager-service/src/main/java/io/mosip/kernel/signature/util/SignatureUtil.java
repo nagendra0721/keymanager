@@ -473,7 +473,10 @@ public class SignatureUtil {
         Date issuedAt = new Date();
         Date notBefore = DateUtils.addDays(issuedAt, notBeforeIndays);
         Date expire = DateUtils.addDays(notBefore, expireIndays);
-        String cwtUniqueId = UUID.randomUUID().toString();
+        String cwtId = requestDto.getCWTId() != null ? requestDto.getCWTId() : SignatureConstant.BLANK;
+        String cwtUniqueId = (cwtId.equalsIgnoreCase(SignatureConstant.RANDOM_UUID))
+                ? UUID.randomUUID().toString()
+                : cwtId;
 
         if (issuer != null && !issuer.isBlank()) {
             claimsSetBuilder.iss(issuer);
@@ -490,7 +493,9 @@ public class SignatureUtil {
         claimsSetBuilder.exp(expire);
         claimsSetBuilder.nbf(notBefore);
         claimsSetBuilder.iat(issuedAt);
-        claimsSetBuilder.cti(cwtUniqueId);
+
+        if (isDataValid(cwtUniqueId))
+            claimsSetBuilder.cti(cwtUniqueId);
 
         return claimsSetBuilder;
     }
