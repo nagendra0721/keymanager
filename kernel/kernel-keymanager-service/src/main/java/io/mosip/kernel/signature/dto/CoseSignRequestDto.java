@@ -14,7 +14,7 @@ import java.util.Map;
 public class CoseSignRequestDto {
 
     @NotBlank
-    @ApiModelProperty(notes = "Base64 encoded Data to sign", example = "ewogICAiYW55S2V5IjogIlRlc3QgSnNvbiIKfQ", required = true)
+    @ApiModelProperty(notes = "Base64URL encoded Data to sign", example = "ewogICAiYW55S2V5IjogIlRlc3QgSnNvbiIKfQ", required = true)
     private String payload;
 
     /**
@@ -46,4 +46,10 @@ public class CoseSignRequestDto {
      */
     @ApiModelProperty(notes = "Algorithm to use for data signing", example = "PS256", required = false)
     private String algorithm;
+
+    /**
+     * Include COSE Tag
+     */
+    @ApiModelProperty(notes = "Include COSE Tag", example = "true", required = false)
+    private Boolean includeCOSETag;
 }

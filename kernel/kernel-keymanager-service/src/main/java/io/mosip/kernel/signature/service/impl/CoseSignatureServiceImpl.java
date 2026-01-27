@@ -36,7 +36,6 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -114,7 +113,7 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
                     SignatureErrorCode.INVALID_INPUT.getErrorMessage());
         }
 
-        String payload = new String(CryptoUtil.decodeURLSafeBase64(base64Payload));
+        byte[] payload = CryptoUtil.decodeURLSafeBase64(base64Payload);
 
         String timestamp = DateUtils.getUTCCurrentDateTimeString();
         String applicationId = coseSignRequestDto.getApplicationId();
@@ -125,7 +124,7 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
         }
 
         SignatureCertificate certificateResponse = keymanagerService.getSignatureCertificate(applicationId,	Optional.of(referenceId), timestamp);
-        String signedData = signCose1(payload.getBytes(StandardCharsets.UTF_8), certificateResponse, referenceId, coseSignRequestDto, false);
+        String signedData = signCose1(payload, certificateResponse, referenceId, coseSignRequestDto, false);
 
         CoseSignResponseDto responseDto = new CoseSignResponseDto();
         responseDto.setSignedData(signedData);
@@ -170,7 +169,8 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
                     .signature(signature)
                     .build();
 
-            return bytesToHex(encodeTaggedCoseSign1(coseSign1, isCwt));
+            boolean includeCoseTag = !Boolean.FALSE.equals(requestDto.getIncludeCOSETag());
+            return bytesToHex(encodeTaggedCoseSign1(coseSign1, isCwt, includeCoseTag));
         } catch (IOException e) {
             LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
                     "Error occurred while signing COSE data.", e);
@@ -179,10 +179,14 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
         }
     }
 
-    private byte[] encodeTaggedCoseSign1(COSESign1 coseSign1, boolean isCwt) throws IOException {
+    private byte[] encodeTaggedCoseSign1(COSESign1 coseSign1, boolean isCwt, boolean includeCoseTag) throws IOException {
         byte[] coseBytes = coseSign1.encode();
         CBORDecoder decoder = new CBORDecoder(coseBytes);
         CBORItem coseItem = decoder.next();
+
+        if (!includeCoseTag)
+            return coseItem.encode();
+
         CBORTaggedItem sign1Tagged = new CBORTaggedItem(SignatureConstant.COSE_SIGN1_TAG, coseItem);
 
         if (isCwt) {
@@ -217,15 +221,14 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
 
             byte[] coseData = signatureUtil.decodeHex(coseHexdata);
             CBORDecoder cborDecoder = new CBORDecoder(coseData);
-            CBORTaggedItem cborTaggedItem = (CBORTaggedItem) cborDecoder.next();
-            if ((int)cborTaggedItem.getTagNumber() != SignatureConstant.COSE_SIGN1_TAG) {
-                LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
-                        "Provided CWT data does not have COSE Sign1 Array tag." + " CWT Tag Number: " + cborTaggedItem.getTagNumber());
-                throw new RequestException(SignatureErrorCode.INVALID_COSE_SIGN1_INPUT.getErrorCode(),
-                        SignatureErrorCode.INVALID_COSE_SIGN1_INPUT.getErrorMessage());
-            }
+            boolean isIncludeCoseTag = !Boolean.FALSE.equals(requestDto.getIsCOSETagIncluded());
 
-            COSESign1 coseSign1 = (COSESign1) cborTaggedItem.getTagContent();
+            COSESign1 coseSign1;
+            if (isIncludeCoseTag)
+                coseSign1 = parseTaggedCoseSign1(cborDecoder);
+            else
+                coseSign1 = parseUntaggedCoseSign1(cborDecoder);
+
             boolean signatureValid = verifyCoseSignature(coseSign1, reqCertData, applicationId, referenceId);
             LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
                     "COSE Signature Verification Status: " + signatureValid);
@@ -235,9 +238,9 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
             responseDto.setMessage(signatureValid ? SignatureConstant.VALIDATION_SUCCESSFUL : SignatureConstant.VALIDATION_FAILED);
             responseDto.setTrustValid(validateTrustForCose(applicationId, referenceId, coseSign1, reqCertData, requestDto));
             return responseDto;
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
-                    "Error occurred while verifying COSE data.", e);
+                    "COSE Verification failed due to error: {}", e.getMessage(), e);
             throw new SignatureFailureException(SignatureErrorCode.COSE_VERIFY_ERROR.getErrorCode(),
                     SignatureErrorCode.COSE_VERIFY_ERROR.getErrorMessage(), e);
         }
@@ -628,6 +631,41 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
                             SignatureErrorCode.CLAIM_NOT_MATCHED.getErrorMessage().replace("{claim}", "Subject"));
                 }
             }
+        }
+    }
+
+    public static COSESign1 parseTaggedCoseSign1(CBORDecoder cborDecoder) {
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.BLANK, SignatureConstant.BLANK,
+                "Parsing COSE Sign1 Tagged Content.");
+        CBORTaggedItem cborTaggedItem;
+        try {
+            cborTaggedItem = (CBORTaggedItem) cborDecoder.next();
+            if ((int) cborTaggedItem.getTagNumber() != SignatureConstant.COSE_SIGN1_TAG) {
+                LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
+                        "Provided COSE data does not have COSE Sign1 Array tag." + " Tag Number: " + cborTaggedItem.getTagNumber());
+                throw new RequestException(SignatureErrorCode.INVALID_COSE_SIGN1_INPUT.getErrorCode(),
+                        SignatureErrorCode.INVALID_COSE_SIGN1_INPUT.getErrorMessage());
+            }
+        } catch (Exception  e) {
+            LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
+                    "Error occurred while parsing COSE Sign1 Tagged Content" + e);
+            throw new RequestException(SignatureErrorCode.TAGGED_COSE_SIGN1.getErrorCode(),
+                    SignatureErrorCode.TAGGED_COSE_SIGN1.getErrorMessage());
+        }
+        return (COSESign1) cborTaggedItem.getTagContent();
+    }
+
+    public static COSESign1 parseUntaggedCoseSign1(CBORDecoder cborDecoder) {
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.BLANK, SignatureConstant.BLANK,
+                "Parsing COSE Sign1 Untagged Content.");
+        try {
+            CBORItem cborItem = cborDecoder.next();
+            return COSESign1.build(cborItem);
+        } catch (IOException | COSEException e) {
+            LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
+                    "Error occurred while parsing COSE Sign1 Untagged Content" + e);
+            throw new RequestException(SignatureErrorCode.UNTAGGED_COSE_SIGN1.getErrorCode(),
+                    SignatureErrorCode.UNTAGGED_COSE_SIGN1.getErrorMessage());
         }
     }
 }
