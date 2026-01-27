@@ -206,7 +206,7 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
             String coseHexdata = requestDto.getCoseSignedData();
             if (!SignatureUtil.isDataValid(coseHexdata)) {
                 LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
-                        "Provided COSE data is invalid.");
+                        "Provided COSE Signed data is invalid.");
                 throw new RequestException(SignatureErrorCode.INVALID_VERIFY_INPUT.getErrorCode(),
                         SignatureErrorCode.INVALID_VERIFY_INPUT.getErrorMessage());
             }
