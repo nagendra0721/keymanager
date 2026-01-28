@@ -646,7 +646,7 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
                 throw new RequestException(SignatureErrorCode.INVALID_COSE_SIGN1_INPUT.getErrorCode(),
                         SignatureErrorCode.INVALID_COSE_SIGN1_INPUT.getErrorMessage());
             }
-        } catch (Exception  e) {
+        } catch (IOException | ClassCastException  e) {
             LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
                     "Error occurred while parsing COSE Sign1 Tagged Content" + e);
             throw new RequestException(SignatureErrorCode.TAGGED_COSE_SIGN1.getErrorCode(),
