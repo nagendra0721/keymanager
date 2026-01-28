@@ -10,7 +10,7 @@ import io.mosip.kernel.signature.dto.CoseSignVerifyResponseDto;
 public interface CoseSignatureService {
 
     /**
-     * COSE Sign
+     * COSE Sign1
      *
      * @param coseSignRequestDto the COSESignRequestDto
      * @return the COSESignResponseDto
@@ -18,7 +18,7 @@ public interface CoseSignatureService {
     public CoseSignResponseDto coseSign1(CoseSignRequestDto coseSignRequestDto);
 
     /**
-     * COSE Verify
+     * COSE Verify1
      *
      * @param coseSignVerifyRequestDto the COSESignVerifyRequestDto
      * @return the COSESignVerifyResponseDto

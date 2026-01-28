@@ -41,6 +41,11 @@ public class CoseSignVerifyRequestDto {
     private String certificateData;
 
     /**
+     * Flag to validate the COSE TAG.
+     */
+    @ApiModelProperty(notes = "Flag to validate the COSE TAG.", example = "true", required = false)
+    private Boolean isCOSETagIncluded;
+    /**
      * Flag to validate against trust store.
      */
     @ApiModelProperty(notes = "Flag to validate against trust store.", example = "false", required = false)

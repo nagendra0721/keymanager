@@ -57,7 +57,7 @@ public class CoseSignController {
     @ResponseFilter
     @PreAuthorize("hasAnyRole(@signAuthRoles.getPostcosesign1())")
     @PostMapping(value = "/coseSign1")
-    public ResponseWrapper<CoseSignResponseDto> coseSign(@RequestBody @Valid RequestWrapper<CoseSignRequestDto> requestDto) {
+    public ResponseWrapper<CoseSignResponseDto> coseSign1(@RequestBody @Valid RequestWrapper<CoseSignRequestDto> requestDto) {
         CoseSignResponseDto coseSignResponse = service.coseSign1(requestDto.getRequest());
         ResponseWrapper<CoseSignResponseDto> response = new ResponseWrapper<>();
         response.setResponse(coseSignResponse);
