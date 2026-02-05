@@ -950,7 +950,8 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 			
 			return new Object[] {signPrivateKey, x509Cert};
 		} catch (InvalidDataException | InvalidKeyException | NullDataException | NullKeyException
-				| NullMethodException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+				| NullMethodException | InvalidKeySpecException | NoSuchAlgorithmException
+				| KeystoreProcessingException | NoSuchSecurityProviderException e) {
 			throw new CryptoException(KeymanagerErrorConstant.CRYPTO_EXCEPTION.getErrorCode(),
 					KeymanagerErrorConstant.CRYPTO_EXCEPTION.getErrorMessage() + e.getMessage(), e);
 		}
