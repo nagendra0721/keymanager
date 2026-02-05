@@ -950,11 +950,15 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 			
 			return new Object[] {signPrivateKey, x509Cert};
 		} catch (InvalidDataException | InvalidKeyException | NullDataException | NullKeyException
-				| NullMethodException | InvalidKeySpecException | NoSuchAlgorithmException
-				| KeystoreProcessingException | NoSuchSecurityProviderException e) {
+				| NullMethodException | InvalidKeySpecException | NoSuchAlgorithmException e) {
 			throw new CryptoException(KeymanagerErrorConstant.CRYPTO_EXCEPTION.getErrorCode(),
 					KeymanagerErrorConstant.CRYPTO_EXCEPTION.getErrorMessage() + e.getMessage(), e);
-		}
+		}  catch (Throwable e) {
+            LOGGER.error(KeymanagerConstant.SESSIONID, KeymanagerConstant.APPLICATIONID, null,
+                    "Invalid Certificate Data provided to upload the certificate.", e);
+            throw new CryptoException(KeymanagerErrorConstant.CRYPTO_EXCEPTION.getErrorCode(),
+                    KeymanagerErrorConstant.CRYPTO_EXCEPTION.getErrorMessage() + e.getMessage(), e);
+        }
 	}
 
 	@Override
