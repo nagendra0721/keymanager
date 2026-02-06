@@ -260,4 +260,6 @@ public class KeymanagerConstant {
     public static final String X25519_ENC_KEY_REF_ID = "X25519_ENC_KEY";
 
     public static final String GENERATE_RSA_SIGN_KEY = "Request received to generate the RSA Signature Key pair.";
+
+    public static final String BOTH = "BOTH";
 }

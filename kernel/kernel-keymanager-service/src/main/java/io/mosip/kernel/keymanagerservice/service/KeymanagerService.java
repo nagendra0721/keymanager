@@ -154,5 +154,15 @@ public interface KeymanagerService {
      * @return {@link KeyPairGenerateResponseDto} instance
      */
     public KeyPairGenerateResponseDto generateRSASignKey(String objectType, KeyPairGenerateRequestDto request);
+
+    /**
+     * Function to get certificate for the provided appId & refId.
+     *
+     * @param appId  appId
+     * @param refId  refId
+     * @param version - version of keymanager used by client
+     * @return {@link KeyPairGenerateResponseDto} instance
+     */
+    public KeyPairGenerateResponseDto getCertificateV2(String appId, Optional<String> refId, Optional<String> version);
 }
 
