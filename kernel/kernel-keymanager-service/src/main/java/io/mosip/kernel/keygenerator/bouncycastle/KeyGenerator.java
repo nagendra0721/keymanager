@@ -92,7 +92,7 @@ public class KeyGenerator {
 	 * @return {@link KeyPair} which contain public and private key
 	 */
 	public KeyPair getAsymmetricKey() {
-		KeyPairGenerator generator = KeyGeneratorUtils.getKeyPairGenerator(asymmetricKeyAlgorithm, asymmetricKeyLength, 
+		KeyPairGenerator generator = KeyGeneratorUtils.getKeyPairGenerator(KeymanagerConstant.RSA, asymmetricKeyLength,
 						getSecureRandom());
 		return generator.generateKeyPair();
 	}

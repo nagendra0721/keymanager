@@ -20,11 +20,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = { KeymanagerTestBootApplication.class })
@@ -793,5 +795,32 @@ public class KeymanagerServiceImplTest {
         requestDto.setReferenceId("ED25519_SIGN");
         response = service.generateCSR(requestDto);
         Assert.assertNotNull(response);
+    }
+
+    @Test
+    public void testGenerateRSASignKey() {
+        KeyPairGenerateRequestDto requestDto = new KeyPairGenerateRequestDto();
+        requestDto.setApplicationId("TEST");
+        requestDto.setReferenceId("RSA_2048_SIGN");
+        KeyPairGenerateResponseDto response = service.generateRSASignKey("CSR", requestDto);
+        Assert.assertNotNull(response);
+    }
+
+    @Test
+    public void testGetCertificateV2() {
+        KeyPairGenerateRequestDto keyPairGenRequestDto = new KeyPairGenerateRequestDto();
+        keyPairGenRequestDto.setApplicationId("TEST");
+        keyPairGenRequestDto.setReferenceId("");
+        service.generateMasterKey("CSR", keyPairGenRequestDto);
+
+        KeyPairGenerateResponseDto result = service.getCertificateV2("TEST", Optional.of("rsaKey"), Optional.of("1.2.0"));
+        String certData = result.getCertificate();
+        Certificate certificate = keymanagerUtil.convertToCertificate(certData);
+        assertEquals("RSA", certificate.getPublicKey().getAlgorithm());
+
+        result = service.getCertificateV2("TEST", Optional.of("ecKey"), Optional.of("1.2.2"));
+        certData = result.getCertificate();
+        certificate = keymanagerUtil.convertToCertificate(certData);
+        assertEquals("RSA", certificate.getPublicKey().getAlgorithm());
     }
 }
