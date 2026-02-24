@@ -48,7 +48,11 @@ public enum SignatureErrorCode {
 
     CLAIM_NOT_FOUND("KER-SIG-118", "{claim} Claim not found in the CWT Token."),
 
-    CLAIM_NOT_MATCHED("KER-SIG-119", "Provided {claim} Claim value not matched with CWT.");
+    CLAIM_NOT_MATCHED("KER-SIG-119", "Provided {claim} Claim value not matched with CWT."),
+
+	UNTAGGED_COSE_SIGN1("KER-SIG-120", "Untagged COSE Sign1 not found"),
+
+	TAGGED_COSE_SIGN1("KER-SIG-121", "Tagged COSE Sign1 not found");
 
 	private final String errorCode;
 	private final String errorMessage;

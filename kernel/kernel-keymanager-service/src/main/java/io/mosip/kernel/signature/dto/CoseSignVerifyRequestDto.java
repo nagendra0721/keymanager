@@ -51,4 +51,10 @@ public class CoseSignVerifyRequestDto {
      */
     @ApiModelProperty(notes = "Domain to be considered to validate trust store.", example = "", required = false)
     private String domain;
+
+    /**
+     * Flag to validate the COSE TAG.
+     */
+    @ApiModelProperty(notes = "Flag to validate the COSE TAG.", example = "true", required = false)
+    private Boolean isCOSETagIncluded;
 }

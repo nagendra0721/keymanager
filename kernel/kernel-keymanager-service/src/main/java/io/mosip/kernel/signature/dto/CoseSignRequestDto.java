@@ -46,4 +46,10 @@ public class CoseSignRequestDto {
      */
     @ApiModelProperty(notes = "Algorithm to use for data signing", example = "PS256", required = false)
     private String algorithm;
+
+    /**
+     * Include COSE Tag
+     */
+    @ApiModelProperty(notes = "Include COSE Tag", example = "true", required = false)
+    private Boolean includeCOSETag;
 }

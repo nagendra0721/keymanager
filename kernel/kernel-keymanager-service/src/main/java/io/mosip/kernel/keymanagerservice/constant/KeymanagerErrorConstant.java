@@ -83,6 +83,8 @@ public enum KeymanagerErrorConstant {
 
     X25519_KEY_CSR_NOT_SUPPORTED("KER-KMS-037", "CSR Certificate generation is Not Supported for X25519 Algorithm"),
 
+	RSA_SIGN_REFERENCE_ID_NOT_SUPPORTED("KER-KMS-038", "RSA Sign Reference Id Not Supported for the Application ID."),
+
 	INTERNAL_SERVER_ERROR("KER-KMS-500", "Internal server error");
 
 	/**
