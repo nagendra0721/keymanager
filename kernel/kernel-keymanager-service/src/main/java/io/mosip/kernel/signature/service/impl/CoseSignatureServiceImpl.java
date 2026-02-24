@@ -136,11 +136,10 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
 
     private String signCose1(byte[] cosePayload, SignatureCertificate certificateResponse, String referenceId, CoseSignRequestDto requestDto, boolean isCwt) {
         try {
-            String algStr = SignatureUtil.isDataValid(requestDto.getAlgorithm())
-                    ? requestDto.getAlgorithm()
-                    : SignatureUtil.getAlgorithmString(certificateResponse.getCertificateEntry().getChain()[0], referenceId);
+            LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
+            "cose sign1 process initiated.");
             String algorithm = (requestDto.getAlgorithm() == null || requestDto.getAlgorithm().isEmpty()) ?
-                    SignatureAlgorithmIdentifyEnum.getAlgorithmIdentifier(algStr) : requestDto.getAlgorithm();
+                    SignatureAlgorithmIdentifyEnum.getAlgorithmIdentifier(referenceId) : requestDto.getAlgorithm();
             COSEProtectedHeaderBuilder protectedHeaderBuilder = coseHeaderBuilder.buildProtectedHeader(certificateResponse, requestDto, getCoseAlgorithm(algorithm), signatureUtil);
             COSEUnprotectedHeaderBuilder unprotectedHeaderBuilder = coseHeaderBuilder.buildUnprotectedHeader(certificateResponse, requestDto, signatureUtil);
             String keyId = getKeyId(kidPrepend, certificateResponse, requestDto, includeKeyId);
@@ -476,8 +475,16 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
             referenceId = signRefid;
         }
 
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
+        "Getting Signature Certificate. for appId:" + applicationId + "and refId:" + referenceId);
         SignatureCertificate certificateResponse = keymanagerService.getSignatureCertificate(applicationId, Optional.of(referenceId), timestamp);
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
+                "Signature Certificate Obtained. for appId:" + applicationId + "and refId:" + referenceId);
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
+                "build cwt claim set");
         byte[] cborClaimsPayload = signatureUtil.buildCWTClaimSet(requestDto);
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
+                "cwt claim set built.");
         CoseSignRequestDto coseSignRequestDto = buildCoseSignRequestDto(requestDto);
         String signedData = signCose1(cborClaimsPayload, certificateResponse, referenceId, coseSignRequestDto, true);
 

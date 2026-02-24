@@ -1,15 +1,18 @@
 package io.mosip.kernel.cryptomanager.service.impl;
 
 import io.mosip.kernel.core.exception.NoSuchAlgorithmException;
+import io.mosip.kernel.core.keymanager.spi.KeyStore;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.kernel.crypto.jce.constant.SecurityExceptionCodeConstant;
 import io.mosip.kernel.crypto.jce.util.CryptoUtils;
 import io.mosip.kernel.cryptomanager.constant.CryptomanagerConstant;
 import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
+import io.mosip.kernel.keymanager.hsm.impl.KeyStoreImpl;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant;
 import io.mosip.kernel.keymanagerservice.logger.KeymanagerLogger;
 import io.mosip.kernel.core.crypto.exception.InvalidKeyException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +29,9 @@ import java.util.Objects;
 
 @Service
 public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
+
+    @Autowired
+    private KeyStore keyStore;
 
     private static final String AES = "AES";
 
@@ -68,8 +74,9 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
         KeyPair ephemeralKeyPair = null;
 
         try {
-            ephemeralKeyPair = generateAlgorithmBasedEphemeralKeyPair(curveName);
-            KeyAgreement keyAgreement = getKeyAgreementAlorithmBased(key, ephemeralKeyPair.getPrivate(), curveName);
+            String provider = keyStore.getKeystoreProviderName();
+            ephemeralKeyPair = generateAlgorithmBasedEphemeralKeyPair(curveName, provider);
+            KeyAgreement keyAgreement = getKeyAgreementAlorithmBased(key, ephemeralKeyPair.getPrivate(), curveName, provider);
             byte[] sharedSecret = keyAgreement.generateSecret();
 
             if (randomIV == null || randomIV.length == 0) {
@@ -151,8 +158,9 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
             byte[] iv = Arrays.copyOfRange(encryptedData, encryptedData.length - ivLength, encryptedData.length);
             byte[] cipherText = Arrays.copyOfRange(encryptedData, 0, encryptedData.length - ivLength);
 
-            PublicKey ephemeralPublicKey = getAlgorithmBasedEphemeralPublicKey(ephemeralPublicKeyBytes, privateKey.getAlgorithm());
-            KeyAgreement keyAgreement = getKeyAgreementAlorithmBased(ephemeralPublicKey, privateKey, privateKey.getAlgorithm());
+            String provider = keyStore.getKeystoreProviderName();
+            PublicKey ephemeralPublicKey = getAlgorithmBasedEphemeralPublicKey(ephemeralPublicKeyBytes, privateKey.getAlgorithm(), provider);
+            KeyAgreement keyAgreement = getKeyAgreementAlorithmBased(ephemeralPublicKey, privateKey, privateKey.getAlgorithm(), provider);
             sharedSecret = keyAgreement.generateSecret();
 
             aesKeyBytes = getHkdfKeyBytes(sharedSecret, iv, reason.getBytes(), AES_KEY_LENGTH);
@@ -262,16 +270,16 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
         }
     }
 
-    private KeyPair generateAlgorithmBasedEphemeralKeyPair(String curveName) {
+    private KeyPair generateAlgorithmBasedEphemeralKeyPair(String curveName, String provider) {
         KeyPairGenerator ephemeralKeyPairGen;
         try {
             if (curveName.equals(KeymanagerConstant.X25519_KEY_TYPE) || curveName.equals(KeymanagerConstant.XDH_ALGORITHM)) {
-                ephemeralKeyPairGen = KeyPairGenerator.getInstance(KeymanagerConstant.X25519_KEY_TYPE);
+                ephemeralKeyPairGen = KeyPairGenerator.getInstance(KeymanagerConstant.X25519_KEY_TYPE, provider);
                 NamedParameterSpec x25519GenParameterSpec = new NamedParameterSpec(KeymanagerConstant.X25519_KEY_TYPE);
                 ephemeralKeyPairGen.initialize(x25519GenParameterSpec);
                 return ephemeralKeyPairGen.generateKeyPair();
             } else {
-                ephemeralKeyPairGen = KeyPairGenerator.getInstance(EC_ALGORITHM, BC_PROVIDER);
+                ephemeralKeyPairGen = KeyPairGenerator.getInstance(EC_ALGORITHM, provider);
                 ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec(curveName);
                 ephemeralKeyPairGen.initialize(ecGenParameterSpec);
                 return ephemeralKeyPairGen.generateKeyPair();
@@ -283,17 +291,17 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
         }
     }
 
-    public KeyAgreement getKeyAgreementAlorithmBased(PublicKey key, PrivateKey privateKey, String curveName) {
+    public KeyAgreement getKeyAgreementAlorithmBased(PublicKey key, PrivateKey privateKey, String curveName, String provider) {
         if (curveName.equals(KeymanagerConstant.X25519_KEY_TYPE) || curveName.equals(KeymanagerConstant.XDH_ALGORITHM))
-            return getKeyAgreement(key, privateKey, KeymanagerConstant.X25519_KEY_TYPE);
+            return getKeyAgreement(key, privateKey, KeymanagerConstant.X25519_KEY_TYPE, provider);
         else
-            return getKeyAgreement(key, privateKey, ECDH);
+            return getKeyAgreement(key, privateKey, ECDH, provider);
     }
 
-    private KeyAgreement getKeyAgreement(PublicKey publicKey, PrivateKey privateKey, String algorithm) {
+    private KeyAgreement getKeyAgreement(PublicKey publicKey, PrivateKey privateKey, String algorithm, String provider) {
         KeyAgreement keyAgreement;
         try {
-            keyAgreement = KeyAgreement.getInstance(algorithm, BC_PROVIDER);
+            keyAgreement = KeyAgreement.getInstance(algorithm, provider);
             keyAgreement.init(privateKey);
             keyAgreement.doPhase(publicKey, true);
         } catch (java.security.NoSuchAlgorithmException | java.security.InvalidKeyException | NoSuchProviderException e) {
@@ -304,14 +312,14 @@ public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
         return keyAgreement;
     }
 
-    public PublicKey getAlgorithmBasedEphemeralPublicKey(byte[] ephemeralPublicKeyBytes, String curveName) {
+    public PublicKey getAlgorithmBasedEphemeralPublicKey(byte[] ephemeralPublicKeyBytes, String curveName, String provider) {
         if (curveName.equals(KeymanagerConstant.X25519_KEY_TYPE) || curveName.equals(KeymanagerConstant.XDH_ALGORITHM))
-            return getEphemeralPublicKey(ephemeralPublicKeyBytes, KeymanagerConstant.X25519_KEY_TYPE);
+            return getEphemeralPublicKey(ephemeralPublicKeyBytes, KeymanagerConstant.X25519_KEY_TYPE, provider);
         else
-            return getEphemeralPublicKey(ephemeralPublicKeyBytes, EC_ALGORITHM);
+            return getEphemeralPublicKey(ephemeralPublicKeyBytes, EC_ALGORITHM, provider);
     }
 
-    private PublicKey getEphemeralPublicKey(byte[] ephemeralPublicKeyBytes, String algo) {
+    private PublicKey getEphemeralPublicKey(byte[] ephemeralPublicKeyBytes, String algo, String provider) {
         try {
             KeyFactory keyFactory = KeyFactory.getInstance(algo, BC_PROVIDER);
             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(ephemeralPublicKeyBytes);

@@ -244,7 +244,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 		KeyStore mosipKeyStore = null;
 		try {
 			// Not adding Provider because BC provider is not allowing to add symmetric key in keystore file.
-            mosipKeyStore = KeyStore.getInstance(keystoreType, provider);
+            mosipKeyStore = KeyStore.getInstance(keystoreType);
             Path path = Paths.get(p12FilePath);
             // if file is not available, it will get created when new key get created.
             if (!Files.exists(path)){

@@ -31,7 +31,7 @@ public class ComponentKeysAlgorithmMigrator {
 
     private static final String OBJECT_TYPE = "CSR";
 
-    @Value("${mosip.kernel.keymanager.autogen.appids.list}")
+    @Value("${mosip.kernel.keymanager.algorithm.migrate.appids.list}")
     private String appIdsList;
 
     @Autowired

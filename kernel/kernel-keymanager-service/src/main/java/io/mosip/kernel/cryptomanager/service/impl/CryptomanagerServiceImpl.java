@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
+import io.mosip.kernel.keymanagerservice.constant.ECCurves;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant;
 import jakarta.annotation.PostConstruct;
 import javax.crypto.BadPaddingException;
@@ -469,7 +470,12 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		cryptomanagerUtil.validateEncKeySize(encCertificate);
 		LOGGER.info(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT, 
 						"Key Size validated, validing input data.");
-		
+
+        String algorithm = keymanagerUtil.getEcCurveName(encCertificate.getPublicKey());
+        if (algorithm.equalsIgnoreCase(ECCurves.SECP256K1.name())) {
+            throw new CryptoManagerSerivceException(CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorCode(),
+                    String.format(CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorMessage(), algorithm));
+        }
 		String dataToEncrypt = jwtEncryptRequestDto.getData();
 		cryptomanagerUtil.validateEncryptData(dataToEncrypt);
 

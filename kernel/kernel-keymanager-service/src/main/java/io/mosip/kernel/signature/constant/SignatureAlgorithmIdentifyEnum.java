@@ -19,7 +19,8 @@ public enum SignatureAlgorithmIdentifyEnum {
     ES256(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256, AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256),
     ES256K(AlgorithmIdentifiers.ECDSA_USING_SECP256K1_CURVE_AND_SHA256, AlgorithmIdentifiers.ECDSA_USING_SECP256K1_CURVE_AND_SHA256),
     EDDSA(AlgorithmIdentifiers.EDDSA, AlgorithmIdentifiers.EDDSA),
-    RS256(AlgorithmIdentifiers.RSA_USING_SHA256, AlgorithmIdentifiers.RSA_USING_SHA256);
+    RS256(AlgorithmIdentifiers.RSA_USING_SHA256, AlgorithmIdentifiers.RSA_USING_SHA256),
+    RSA_2048_SIGN(KeyReferenceIdConsts.RSA_2048_SIGN.name(), AlgorithmIdentifiers.RSA_USING_SHA256);
 
     private final String referenceId;
     private final String algoIdent;

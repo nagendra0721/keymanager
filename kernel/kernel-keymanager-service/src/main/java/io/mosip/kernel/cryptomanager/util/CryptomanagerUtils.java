@@ -444,8 +444,9 @@ public class CryptomanagerUtils {
 
         LocalDateTime localDateTime = DateUtils.getUTCCurrentDateTime();
         Map<String, List<KeyAlias>> keyAliasMap = dbHelper.getKeyAliases(appId, refId.get(), localDateTime);
-        KeyAlias keyAlias = keyAliasMap.get(KeymanagerConstant.CURRENTKEYALIAS).getFirst();
-        String ksAlias = keyAlias.getAlias();
+        List<KeyAlias> curkeyAliasList = keyAliasMap.getOrDefault(KeymanagerConstant.CURRENTKEYALIAS, Collections.emptyList());
+		List<KeyAlias> keyAliasList = keyAliasMap.getOrDefault(KeymanagerConstant.KEYALIAS, Collections.emptyList());
+        String ksAlias = curkeyAliasList.isEmpty() ? keyAliasList.getFirst().getAlias() : curkeyAliasList.getFirst().getAlias();
 
         if (!refId.isPresent() || refId.get().trim().isEmpty()) {
             LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY,

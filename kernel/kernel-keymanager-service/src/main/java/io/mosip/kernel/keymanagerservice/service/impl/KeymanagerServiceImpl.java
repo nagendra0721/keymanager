@@ -850,7 +850,8 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256K1_SIGN.name())) ||
 						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256R1_SIGN.name())) ||
 						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.ED25519_SIGN.name())
-						 && ed25519SupportFlag)) {
+						 && ed25519SupportFlag) ||
+						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.RSA_2048_SIGN.name()))) {
 			LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY,
 					"Reference Id is present and it is " + refId.get() + " reference. Will get Certificate from HSM");
 			certificateData = getCertificateFromHSM(appId, localDateTimeStamp, refId.get());
@@ -1308,7 +1309,8 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256K1_SIGN.name())) ||
 						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256R1_SIGN.name())) ||
 						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.ED25519_SIGN.name())
-						 && ed25519SupportFlag)) {
+						 && ed25519SupportFlag) ||
+						(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.RSA_2048_SIGN.name()))) {
 			LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY,
 					"Reference Id is present and it is " + refId.get() + " reference. Will get all certificates from HSM");
 			certificateDataList = getAllCertificatesFromHSM(appId, localDateTimeStamp, refId.get());
@@ -1468,7 +1470,14 @@ public class KeymanagerServiceImpl implements KeymanagerService {
         LOGGER.info(KeymanagerConstant.SESSIONID, this.getClass().getSimpleName(), KeymanagerConstant.EMPTY,
                 KeymanagerConstant.REFERENCEID + ":" + refId.toString());
 
-		ecKeyPairGenRequestValidator.validate(objectType, request);
+		try {
+			ecKeyPairGenRequestValidator.validate(objectType, request);
+		} catch (KeymanagerServiceException e) {
+			LOGGER.error(KeymanagerConstant.SESSIONID, this.getClass().getSimpleName(), KeymanagerConstant.VALIDATE,
+					"Reference Id not supported for the provided application Id for RSA Sign Keys.");
+			throw new KeymanagerServiceException(KeymanagerErrorConstant.RSA_SIGN_REFERENCE_ID_NOT_SUPPORTED.getErrorCode(),
+					KeymanagerErrorConstant.RSA_SIGN_REFERENCE_ID_NOT_SUPPORTED.getErrorMessage());
+		}
 		return generateKey(objectType, applicationId, refId, forceFlag, request);
 	}
 

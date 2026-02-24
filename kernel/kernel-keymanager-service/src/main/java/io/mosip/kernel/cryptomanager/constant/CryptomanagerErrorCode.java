@@ -69,6 +69,8 @@ public enum CryptomanagerErrorCode {
 
     UNSUPPORTED_EC_CURVE("KER-CRY-016", "Unsupported EC Curve Provided. Please check the curve name."),
 
+	JWE_ENCRYPTION_NOT_SUPPORTED("KER-CRY-017", "JWE encryption is not supported for the provided (%S) public key."),
+
 	INTERNAL_SERVER_ERROR("KER-CRY-500", "Internal server error");
 
 
