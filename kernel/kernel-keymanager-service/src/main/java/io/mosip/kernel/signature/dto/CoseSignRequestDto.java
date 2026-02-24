@@ -14,7 +14,7 @@ import java.util.Map;
 public class CoseSignRequestDto {
 
     @NotBlank
-    @ApiModelProperty(notes = "Base64 encoded Data to sign", example = "ewogICAiYW55S2V5IjogIlRlc3QgSnNvbiIKfQ", required = true)
+    @ApiModelProperty(notes = "Base64URL encoded Data to sign", example = "ewogICAiYW55S2V5IjogIlRlc3QgSnNvbiIKfQ", required = true)
     private String payload;
 
     /**

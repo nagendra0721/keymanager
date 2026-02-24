@@ -172,8 +172,6 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
                     .build();
 
             boolean includeCoseTag = !Boolean.FALSE.equals(requestDto.getIncludeCOSETag());
-            LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
-            "cose sign1 process completed.");
             return bytesToHex(encodeTaggedCoseSign1(coseSign1, isCwt, includeCoseTag));
         } catch (IOException e) {
             LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,

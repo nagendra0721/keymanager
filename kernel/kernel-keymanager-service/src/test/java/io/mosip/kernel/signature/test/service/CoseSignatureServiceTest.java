@@ -1,9 +1,7 @@
 package io.mosip.kernel.signature.test.service;
 
 import io.mosip.kernel.core.util.CryptoUtil;
-import io.mosip.kernel.core.util.DateUtils;
 import io.mosip.kernel.keymanagerservice.dto.KeyPairGenerateRequestDto;
-import io.mosip.kernel.keymanagerservice.exception.KeymanagerServiceException;
 import io.mosip.kernel.keymanagerservice.repository.KeyAliasRepository;
 import io.mosip.kernel.keymanagerservice.service.KeymanagerService;
 import io.mosip.kernel.keymanagerservice.test.KeymanagerTestBootApplication;
@@ -12,7 +10,6 @@ import io.mosip.kernel.signature.dto.*;
 import io.mosip.kernel.signature.exception.RequestException;
 import io.mosip.kernel.signature.exception.SignatureFailureException;
 import io.mosip.kernel.signature.service.CoseSignatureService;
-import io.mosip.kernel.signature.service.impl.CoseSignatureServiceImpl;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,8 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,7 +62,7 @@ public class CoseSignatureServiceTest {
         coseSignRequestDto.setReferenceId("");
         coseSignRequestDto.setPayload(CryptoUtil.encodeToURLSafeBase64("test payload".getBytes()));
         coseSignRequestDto.setAlgorithm("RS256");
-        
+
         CoseSignResponseDto response = coseSignatureService.coseSign1(coseSignRequestDto);
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getSignedData());
@@ -175,7 +170,7 @@ public class CoseSignatureServiceTest {
     public void testCoseSign1EmptyPayload() {
         CoseSignRequestDto coseSignRequestDto = new CoseSignRequestDto();
         coseSignRequestDto.setPayload("");
-        
+
         RequestException exception = assertThrows(RequestException.class, () -> {
             coseSignatureService.coseSign1(coseSignRequestDto);
         });
@@ -194,14 +189,14 @@ public class CoseSignatureServiceTest {
         coseSignRequestDto.setReferenceId("");
         coseSignRequestDto.setPayload("eyAibW9kdWxlIjogImtleW1hbmFnZXIiLCAicHVycG9zZSI6ICJ0ZXN0IGNhc2UiIH0");
         CoseSignResponseDto signResponse = coseSignatureService.coseSign1(coseSignRequestDto);
-        
+
         // Then verify it
         CoseSignVerifyRequestDto coseSignVerifyRequestDto = new CoseSignVerifyRequestDto();
         coseSignVerifyRequestDto.setApplicationId("TEST");
         coseSignVerifyRequestDto.setReferenceId("");
         coseSignVerifyRequestDto.setCoseSignedData(signResponse.getSignedData());
         CoseSignVerifyResponseDto verifyResponse = coseSignatureService.coseVerify1(coseSignVerifyRequestDto);
-        
+
         Assert.assertNotNull(verifyResponse);
         Assert.assertTrue(verifyResponse.isSignatureValid());
         Assert.assertEquals("Validation Successful", verifyResponse.getMessage());
@@ -226,7 +221,7 @@ public class CoseSignatureServiceTest {
         coseSignVerifyRequestDto.setCoseSignedData(signResponse.getSignedData());
         coseSignVerifyRequestDto.setValidateTrust(true);
         coseSignVerifyRequestDto.setDomain("DEVICE");
-        
+
         CoseSignVerifyResponseDto verifyResponse = coseSignatureService.coseVerify1(coseSignVerifyRequestDto);
         Assert.assertNotNull(verifyResponse);
     }
@@ -235,7 +230,7 @@ public class CoseSignatureServiceTest {
     public void testCoseVerify1InvalidData() {
         CoseSignVerifyRequestDto coseSignVerifyRequestDto = new CoseSignVerifyRequestDto();
         coseSignVerifyRequestDto.setCoseSignedData("invalid-hex-data");
-        
+
         SignatureFailureException exception = assertThrows(SignatureFailureException.class, () -> {
             coseSignatureService.coseVerify1(coseSignVerifyRequestDto);
         });
@@ -246,14 +241,14 @@ public class CoseSignatureServiceTest {
     public void testCoseVerify1EmptyData() {
         CoseSignVerifyRequestDto coseSignVerifyRequestDto = new CoseSignVerifyRequestDto();
         coseSignVerifyRequestDto.setCoseSignedData("");
-        
-        RequestException exception = assertThrows(RequestException.class, () -> {
+
+        SignatureFailureException exception = assertThrows(SignatureFailureException.class, () -> {
             coseSignatureService.coseVerify1(coseSignVerifyRequestDto);
         });
         Assert.assertNotNull(exception);
     }
 
-    @Test(expected = RequestException.class)
+    @Test(expected = SignatureFailureException.class)
     public void testCoseVerifyTag() {
         KeyPairGenerateRequestDto keyPairGenRequestDto = new KeyPairGenerateRequestDto();
         keyPairGenRequestDto.setApplicationId("ID_REPO");
@@ -301,8 +296,9 @@ public class CoseSignatureServiceTest {
         cwtSignRequestDto.setApplicationId("ID_REPO");
         cwtSignRequestDto.setReferenceId("EC_SECP256R1_SIGN");
         cwtSignRequestDto.setPayload(null);
-        cwtSignRequestDto.setClaim169Payload("D83DD28445A101390100A053A3041A69BE65DC051A68D117DC061A68D117DC584603104DA01E36460ABC0A408985D760EEACE7FFC445E46F221FB2DCC2DE29E9388D2384F4B9A2C8FF6369A3AA2A82EBE532C763C780F1B3C87FCAD58B01A93B4099D281BC327C");
-        
+        cwtSignRequestDto.setClaim169Payload(
+                "D83DD28445A101390100A053A3041A69BE65DC051A68D117DC061A68D117DC584603104DA01E36460ABC0A408985D760EEACE7FFC445E46F221FB2DCC2DE29E9388D2384F4B9A2C8FF6369A3AA2A82EBE532C763C780F1B3C87FCAD58B01A93B4099D281BC327C");
+
         CoseSignResponseDto response = coseSignatureService.cwtSign(cwtSignRequestDto);
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getSignedData());
@@ -381,7 +377,7 @@ public class CoseSignatureServiceTest {
         cwtSignRequestDto.setReferenceId("");
         cwtSignRequestDto.setPayload("");
         cwtSignRequestDto.setClaim169Payload("");
-        
+
         RequestException exception = assertThrows(RequestException.class, () -> {
             coseSignatureService.cwtSign(cwtSignRequestDto);
         });
@@ -402,7 +398,7 @@ public class CoseSignatureServiceTest {
         cwtSignRequestDto.setIssuer("keymgr");
         cwtSignRequestDto.setSubject("signature");
         CoseSignResponseDto signResponse = coseSignatureService.cwtSign(cwtSignRequestDto);
-        
+
         // Then verify it
         CWTVerifyRequestDto cwtVerifyRequestDto = new CWTVerifyRequestDto();
         cwtVerifyRequestDto.setApplicationId("ID_REPO");
@@ -411,7 +407,7 @@ public class CoseSignatureServiceTest {
         cwtVerifyRequestDto.setIssuer("keymgr");
         cwtVerifyRequestDto.setSubject("signature");
         CoseSignVerifyResponseDto verifyResponse = coseSignatureService.cwtVerify(cwtVerifyRequestDto);
-        
+
         Assert.assertNotNull(verifyResponse);
         Assert.assertTrue(verifyResponse.isSignatureValid());
         Assert.assertEquals("Validation Successful", verifyResponse.getMessage());
@@ -421,7 +417,7 @@ public class CoseSignatureServiceTest {
     public void testCwtVerifyInvalidData() {
         CWTVerifyRequestDto cwtVerifyRequestDto = new CWTVerifyRequestDto();
         cwtVerifyRequestDto.setCoseSignedData("invalid-hex-data");
-        
+
         SignatureFailureException exception = assertThrows(SignatureFailureException.class, () -> {
             coseSignatureService.cwtVerify(cwtVerifyRequestDto);
         });
@@ -432,7 +428,7 @@ public class CoseSignatureServiceTest {
     public void testCwtVerifyEmptyData() {
         CWTVerifyRequestDto cwtVerifyRequestDto = new CWTVerifyRequestDto();
         cwtVerifyRequestDto.setCoseSignedData("");
-        
+
         RequestException exception = assertThrows(RequestException.class, () -> {
             coseSignatureService.cwtVerify(cwtVerifyRequestDto);
         });
@@ -458,7 +454,8 @@ public class CoseSignatureServiceTest {
         cwtVerifyRequestDto.setCoseSignedData(response.getSignedData());
         coseSignatureService.cwtVerify(cwtVerifyRequestDto);
 
-        cwtVerifyRequestDto.setCoseSignedData("D83DD38445A101390100A053A3041A69BE65DC051A68D117DC061A68D117DC584603104DA01E36460ABC0A408985D760EEACE7FFC445E46F221FB2DCC2DE29E9388D2384F4B9A2C8FF6369A3AA2A82EBE532C763C780F1B3C87FCAD58B01A93B4099D281BC327C");
+        cwtVerifyRequestDto.setCoseSignedData(
+                "D83DD38445A101390100A053A3041A69BE65DC051A68D117DC061A68D117DC584603104DA01E36460ABC0A408985D760EEACE7FFC445E46F221FB2DCC2DE29E9388D2384F4B9A2C8FF6369A3AA2A82EBE532C763C780F1B3C87FCAD58B01A93B4099D281BC327C");
         coseSignatureService.cwtVerify(cwtVerifyRequestDto);
     }
 
@@ -517,7 +514,7 @@ public class CoseSignatureServiceTest {
         coseSignRequestDto.setReferenceId("");
         coseSignRequestDto.setPayload("eyAibW9kdWxlIjogImtleW1hbmFnZXIiLCAicHVycG9zZSI6ICJ0ZXN0IGNhc2UiIH0");
         coseSignRequestDto.setAlgorithm("PS256");
-        
+
         CoseSignResponseDto response = coseSignatureService.coseSign1(coseSignRequestDto);
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getSignedData());
@@ -535,7 +532,7 @@ public class CoseSignatureServiceTest {
         coseSignRequestDto.setReferenceId("EC_SECP256K1_SIGN");
         coseSignRequestDto.setAlgorithm("ES256K");
         coseSignRequestDto.setPayload("eyAibW9kdWxlIjogImtleW1hbmFnZXIiLCAicHVycG9zZSI6ICJ0ZXN0IGNhc2UiIH0");
-        
+
         CoseSignResponseDto response = coseSignatureService.coseSign1(coseSignRequestDto);
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getSignedData());
@@ -571,7 +568,7 @@ public class CoseSignatureServiceTest {
         cwtVerifyRequestDto.setIssuer("keymgr");
         exception = assertThrows(RequestException.class, () -> {
             coseSignatureService.cwtVerify(cwtVerifyRequestDto);
-            });
+        });
         Assert.assertEquals(SignatureErrorCode.CLAIM_NOT_FOUND.getErrorCode(), exception.getErrorCode());
 
         cwtSignRequestDto.setSubject("sign");
