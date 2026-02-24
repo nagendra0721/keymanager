@@ -386,7 +386,11 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
             String kidPrefix = kidPrepend;
             if (kidPrepend.equalsIgnoreCase(SignatureConstant.KEY_ID_PREFIX)) {
                 String payload = Objects.isNull(requestDto.getPayload()) ? "" : requestDto.getPayload();
-                kidPrefix = SignatureUtil.getIssuerFromPayload(payload).concat(SignatureConstant.KEY_ID_SEPARATOR);
+                kidPrefix = SignatureUtil.getIssuerFromPayload(payload);
+                if (kidPrefix.isEmpty())
+                    kidPrefix = SignatureConstant.BLANK;
+                else
+                    kidPrefix = kidPrefix.concat(SignatureConstant.KEY_ID_SEPARATOR);
             }
             String keyId = SignatureUtil.convertHexToBase64(certificateResponse.getUniqueIdentifier());
             if (includeKeyId && Objects.nonNull(keyId)) {
