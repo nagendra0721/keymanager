@@ -257,30 +257,30 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
             LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.ENCRYPT, CryptomanagerConstant.ENCRYPT,
                     "Found the cerificate, proceeding with ecc key encryption.");
 
-            byte[] aad = cryptomanagerUtil.generateRandomBytes(CryptomanagerConstant.GCM_AAD_LENGTH);
-            String algName = ecCurveName.equals(KeymanagerConstant.ED25519_KEY_TYPE) ? KeymanagerConstant.X25519_KEY_TYPE : ecCurveName;
-            byte[] encryptedData = ecCryptomanagerService.asymmetricEcEncrypt(publicKey, cryptomanagerUtil.decodeBase64Data(cryptoRequestDto.getData()), null, aad, algName);
-            byte[] encryptedDataWithIv = cryptomanagerUtil.concatByteArrays(aad, encryptedData);
+			byte[] aad = cryptomanagerUtil.generateRandomBytes(CryptomanagerConstant.GCM_AAD_LENGTH);
+			String algName = keymanagerUtil.getEcCurveName(publicKey);
+			byte[] encryptedData = ecCryptomanagerService.asymmetricEcEncrypt(publicKey,
+					cryptomanagerUtil.decodeBase64Data(cryptoRequestDto.getData()), null, aad, algName);
+			byte[] encryptedDataWithIv = cryptomanagerUtil.concatByteArrays(aad, encryptedData);
 
-            LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.ENCRYPT, CryptomanagerConstant.ENCRYPT,
-                    "ECC key encryption completed.");
+			LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.ENCRYPT, CryptomanagerConstant.ENCRYPT,
+					"ECC key encryption completed.");
 
-            byte[] headerBytes = cryptomanagerUtil.getHeaderByte(algName);
+			byte[] headerBytes = cryptomanagerUtil.getHeaderByte(algName);
 
-            byte[] concatedData = cryptomanagerUtil.concatCertThumbprint(certThumbprint, encryptedDataWithIv);
-            byte[] finalEncKeyBytes = CryptoUtil.combineByteArray(concatedData, headerBytes, keySplitter);
-            cryptoResponseDto.setData(CryptoUtil.encodeToURLSafeBase64(finalEncKeyBytes));
-        }
-        return cryptoResponseDto;
-    }
+			byte[] concatedData = cryptomanagerUtil.concatCertThumbprint(certThumbprint, encryptedDataWithIv);
+			byte[] finalEncKeyBytes = CryptoUtil.combineByteArray(concatedData, headerBytes, keySplitter);
+			cryptoResponseDto.setData(CryptoUtil.encodeToURLSafeBase64(finalEncKeyBytes));
+		}
+		return cryptoResponseDto;
+	}
 
-	private byte[] generateAadAndEncryptData(SecretKey secretKey, String data){
-		LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.ENCRYPT, CryptomanagerConstant.ENCRYPT, 
-						"Provided AAD value is null or empty byte array. So generating random 32 bytes for AAD.");
+	private byte[] generateAadAndEncryptData(SecretKey secretKey, String data) {
+		LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.ENCRYPT, CryptomanagerConstant.ENCRYPT,
+				"Provided AAD value is null or empty byte array. So generating random 32 bytes for AAD.");
 		byte[] aad = cryptomanagerUtil.generateRandomBytes(CryptomanagerConstant.GCM_AAD_LENGTH);
 		byte[] nonce = copyOfRange(aad, 0, CryptomanagerConstant.GCM_NONCE_LENGTH);
-		byte[] encData = cryptoCore.symmetricEncrypt(secretKey, cryptomanagerUtil.decodeBase64Data(data),
-								nonce, aad);
+		byte[] encData = cryptoCore.symmetricEncrypt(secretKey, cryptomanagerUtil.decodeBase64Data(data), nonce, aad);
 		return cryptomanagerUtil.concatByteArrays(aad, encData);
 	}
 
@@ -313,9 +313,9 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
             LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.DECRYPT, KeymanagerConstant.RSA,
                     "Decrytping the data with RSA Key.");
 
-            byte[] encryptedKey = copyOfRange(encryptedHybridData, 0, keyDemiliterIndex);
-            byte[] encryptedData = copyOfRange(encryptedHybridData, keyDemiliterIndex + keySplitter.length(),
-                    encryptedHybridData.length);
+			byte[] encryptedKey = copyOfRange(encryptedHybridData, 0, keyDemiliterIndex);
+			byte[] encryptedData = copyOfRange(encryptedHybridData, keyDemiliterIndex + keySplitter.length(),
+					encryptedHybridData.length);
 
             byte[] headerBytes = cryptomanagerUtil.parseEncryptKeyHeader(encryptedKey);
             cryptoRequestDto.setData(CryptoUtil.encodeToURLSafeBase64(copyOfRange(encryptedKey, headerBytes.length, encryptedKey.length)));
@@ -346,9 +346,9 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
             byte[] encryptedDataWithIv = copyOfRange(encryptedHybridData, keyDemiliterIndex + keySplitter.length() + CryptomanagerConstant.THUMBPRINT_LENGTH,
                     encryptedHybridData.length);
 
-            String certThumbprintHex = Hex.toHexString(thumbprint).toUpperCase();
-            PrivateKey privateKey = (PrivateKey) cryptomanagerUtil.getEncryptedPrivateKey(cryptoRequestDto.getApplicationId(),
-                    Optional.ofNullable(cryptoRequestDto.getReferenceId()), certThumbprintHex)[0];
+			String certThumbprintHex = Hex.toHexString(thumbprint).toUpperCase();
+			PrivateKey privateKey = (PrivateKey) cryptomanagerUtil.getPrivateKeyForDecryption(cryptoRequestDto.getApplicationId(),
+					Optional.ofNullable(cryptoRequestDto.getReferenceId()), certThumbprintHex)[0];
 
             byte[] aad = Arrays.copyOfRange(encryptedDataWithIv, 0, CryptomanagerConstant.GCM_AAD_LENGTH);
             byte[] encryptedData = Arrays.copyOfRange(encryptedDataWithIv, CryptomanagerConstant.GCM_AAD_LENGTH,encryptedDataWithIv.length);
@@ -459,8 +459,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		} 
 		if (Objects.isNull(encCertificate)) {
 			cryptomanagerUtil.validateKeyIdentifierIds(jwtEncryptRequestDto.getApplicationId(), jwtEncryptRequestDto.getReferenceId());
-			encCertificate = cryptomanagerUtil.getCertificate(jwtEncryptRequestDto.getApplicationId(),
-									 jwtEncryptRequestDto.getReferenceId());
+			encCertificate = cryptomanagerUtil.getCertificate(jwtEncryptRequestDto.getApplicationId(), jwtEncryptRequestDto.getReferenceId());
 			// getCertificate should return a valid certificate for encryption. If no certificate is available,
 			// getCertificate will automatically throws an exception. So not checking for null for encCertificate. 
 		}
@@ -489,12 +488,9 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		LOGGER.info(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT, 
 						"Input Data validated, proceeding with JWE Encryption.");
 
-		boolean enableDefCompression = cryptomanagerUtil.isIncludeAttrsValid(jwtEncryptRequestDto.getEnableDefCompression(), 
-																		DEFAULT_INCLUDES_TRUE);
-		boolean includeCertificate = cryptomanagerUtil.isIncludeAttrsValid(jwtEncryptRequestDto.getIncludeCertificate(),
-																		DEFAULT_INCLUDES_FALSE);
-		boolean includeCertHash = cryptomanagerUtil.isIncludeAttrsValid(jwtEncryptRequestDto.getIncludeCertHash(),
-																		DEFAULT_INCLUDES_FALSE);
+		boolean enableDefCompression = cryptomanagerUtil.isIncludeAttrsValid(jwtEncryptRequestDto.getEnableDefCompression(), DEFAULT_INCLUDES_TRUE);
+		boolean includeCertificate = cryptomanagerUtil.isIncludeAttrsValid(jwtEncryptRequestDto.getIncludeCertificate(), DEFAULT_INCLUDES_FALSE);
+		boolean includeCertHash = cryptomanagerUtil.isIncludeAttrsValid(jwtEncryptRequestDto.getIncludeCertHash(), DEFAULT_INCLUDES_FALSE);
 
 		String certificateUrl = cryptomanagerUtil.isDataValid(jwtEncryptRequestDto.getJwkSetUrl()) ? 
 												jwtEncryptRequestDto.getJwkSetUrl(): null;
@@ -537,7 +533,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		}
 
 		if (includeCertificate) {
-			jsonWebEncrypt.setCertificateChainHeaderValue(new X509Certificate[] { (X509Certificate)certificate });
+			jsonWebEncrypt.setCertificateChainHeaderValue(new X509Certificate[] { (X509Certificate) certificate });
 		}
 
 		if (includeCertHash) {
@@ -556,7 +552,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		} catch (JoseException e) {
 			LOGGER.error(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT, 
 					"Error occurred while Json Web Encryption Data.");
-					throw new CryptoManagerSerivceException(CryptomanagerErrorCode.JWE_ENCRYPTION_INTERNAL_ERROR.getErrorCode(),
+			throw new CryptoManagerSerivceException(CryptomanagerErrorCode.JWE_ENCRYPTION_INTERNAL_ERROR.getErrorCode(),
 					CryptomanagerErrorCode.JWE_ENCRYPTION_INTERNAL_ERROR.getErrorMessage(), e);
 		}
 	}
