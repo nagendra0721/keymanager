@@ -22,6 +22,11 @@ public class MigrateKeysAlgorithmApplication implements CommandLineRunner {
     @Autowired
     ComponentKeysAlgorithmMigrator algorithmMigrator;
 
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
     public static void main(String[] args) {
         ConfigurableApplicationContext run = SpringApplication.run(MigrateKeysAlgorithmApplication.class, args);
         SpringApplication.exit(run);
