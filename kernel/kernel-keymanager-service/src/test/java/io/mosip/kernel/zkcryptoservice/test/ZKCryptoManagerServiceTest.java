@@ -1551,7 +1551,7 @@ public class ZKCryptoManagerServiceTest {
         when(keyStoreRepository.findByAlias(anyString())).thenReturn(createKeyStoreOptional());
         when(keymanagerUtil.convertToCertificate(anyString())).thenReturn(mockCertificate);
         when(mockCertificate.getPublicKey()).thenReturn(keyPair.getPublic());
-        when(cryptomanagerUtil.getEncryptedPrivateKey(anyString(), any(), anyString()))
+        when(cryptomanagerUtil.getPrivateKeyForDecryption(anyString(), any(), anyString()))
                 .thenReturn(new Object[]{keyPair.getPrivate()});
         // Use lenient() for stubs that may not be used in all tests that call this helper
         lenient().when(keymanagerUtil.getEcCurveName(any(PublicKey.class))).thenReturn("SECP256R1");
