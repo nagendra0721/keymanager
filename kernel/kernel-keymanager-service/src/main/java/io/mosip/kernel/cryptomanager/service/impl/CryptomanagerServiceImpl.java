@@ -471,7 +471,8 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		LOGGER.info(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT, 
 						"Key Size validated, validing input data.");
 
-        String algorithm = keymanagerUtil.getEcCurveName(encCertificate.getPublicKey());
+        String algorithm = encCertificate.getPublicKey().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA) ?
+								KeymanagerConstant.RSA : keymanagerUtil.getEcCurveName(encCertificate.getPublicKey());
         if (algorithm.equalsIgnoreCase(ECCurves.SECP256K1.name())) {
             throw new CryptoManagerSerivceException(CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorCode(),
                     String.format(CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorMessage(), algorithm));
