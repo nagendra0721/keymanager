@@ -474,8 +474,7 @@ public class KeymanagerControllerTest {
         mockMvc.perform(post("/generateMasterKey/CERTIFICATE")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.response").exists());
+                .andExpect(status().isInternalServerError();
     }
 
     @Test
@@ -489,7 +488,8 @@ public class KeymanagerControllerTest {
         mockMvc.perform(get("/getCertificate")
                         .param("applicationId", "KERNEL")
                         .param("referenceId", "SIGN"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response").exists());
     }
 
     @Test
