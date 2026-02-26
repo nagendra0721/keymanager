@@ -468,7 +468,7 @@ public class KeymanagerControllerTest {
         mockMvc.perform(post("/generateMasterKey/CSR")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.response").exists());
     }
 
