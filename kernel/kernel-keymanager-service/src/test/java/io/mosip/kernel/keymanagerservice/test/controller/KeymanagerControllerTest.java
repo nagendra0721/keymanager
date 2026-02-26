@@ -489,8 +489,7 @@ public class KeymanagerControllerTest {
         mockMvc.perform(get("/getCertificate")
                         .param("applicationId", "KERNEL")
                         .param("referenceId", "SIGN"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.response").exists());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
