@@ -17,6 +17,7 @@ import javax.security.auth.x500.X500Principal;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant;
 import io.mosip.kernel.keymanagerservice.dto.ExtendedCertificateParameters;
 import io.mosip.kernel.keymanagerservice.dto.SubjectAlternativeNamesDto;
+import io.mosip.kernel.keymanagerservice.exception.KeymanagerServiceException;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -302,9 +303,11 @@ public class CertificateUtility {
                 keyAlgorithm.equals(KeymanagerConstant.ED25519_ALG_OID) ||
                 keyAlgorithm.equals(KeymanagerConstant.EDDSA_KEY_TYPE))
             return io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.ED_SIGN_ALGORITHM;
-        else if (keyAlgorithm.equals(KeymanagerConstant.X25519_KEY_TYPE))
-            return KeymanagerConstant.X25519_KEY_TYPE;
-
-        return io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.RSA_SIGN_ALGORITHM;
+        else if (keyAlgorithm.equals(io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.RSA_KEY_TYPE))
+            return io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.RSA_SIGN_ALGORITHM;
+		else {
+			throw new KeymanagerServiceException(KeymanagerErrorCode.CERTIFICATE_SIGN_NOT_SUPPORT.getErrorCode(),
+					KeymanagerErrorCode.CERTIFICATE_SIGN_NOT_SUPPORT.getErrorMessage());
+		}
     }
 }

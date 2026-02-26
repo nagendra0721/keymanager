@@ -241,12 +241,17 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 			certParams = keymanagerUtil.getCertificateParameters(latestCertPrincipal, generationDateTime, expiryDateTime);
 		}
 
-        if (!masterKeyAlgorithm.equals(KeymanagerConstant.RSA) || (Arrays.stream(KeyReferenceIdConsts.values())
-                .noneMatch((rId) -> rId.name().equals(referenceId)))) {
-            keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams, eccCurve);
-        } else {
-            keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams);
-        }
+		if (ecRefIdsAlgoNamesMap.containsKey(referenceId)) {
+			// Priority 1: Explicit ECC curves
+			keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams, ecRefIdsAlgoNamesMap.get(referenceId).toLowerCase());
+		} else if (KeyReferenceIdConsts.RSA_2048_SIGN.name().equals(referenceId)
+				|| masterKeyAlgorithm.equalsIgnoreCase(KeymanagerConstant.RSA)) {
+			// Priority 2: RSA
+			keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams);
+		} else {
+			// Priority 3: Default ECC
+			keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams, eccCurve);
+		}
 
 		X509Certificate x509Cert = (X509Certificate) keyStore.getCertificate(alias);
 		String certThumbprint = cryptomanagerUtil.getCertificateThumbprintInHex(x509Cert);
