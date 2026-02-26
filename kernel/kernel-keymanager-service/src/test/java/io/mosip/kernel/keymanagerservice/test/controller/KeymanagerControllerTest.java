@@ -465,7 +465,7 @@ public class KeymanagerControllerTest {
         keyPairDto.setForce(true);
         request.setRequest(keyPairDto);
 
-        mockMvc.perform(post("/generateMasterKey/CERTIFICATE")
+        mockMvc.perform(post("/generateMasterKey/CSR")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
