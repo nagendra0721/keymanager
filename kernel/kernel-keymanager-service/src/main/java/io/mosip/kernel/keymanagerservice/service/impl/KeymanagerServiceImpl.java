@@ -414,7 +414,7 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 			}
 
             PrivateKeyEntry signKeyEntry;
-            if (masterPublicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE)) {
+            if (masterPublicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE) || masterPublicKey.getAlgorithm().equals(KeymanagerConstant.XDH_ALGORITHM)) {
                 CertificateInfo<X509Certificate> ed25519CertInfo = getCertificateFromHSM(applicationId, timeStamp, KeymanagerConstant.EMPTY);
                 String edSignMasterAlias = ed25519CertInfo.getAlias();
                 signKeyEntry = keyStore.getAsymmetricKey(edSignMasterAlias);

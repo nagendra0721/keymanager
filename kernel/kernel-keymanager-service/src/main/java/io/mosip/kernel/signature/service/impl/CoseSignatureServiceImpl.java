@@ -138,6 +138,10 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
         try {
             LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.COSE_SIGN, SignatureConstant.BLANK,
             "cose sign1 process initiated.");
+            if (requestDto.getReferenceId() == null || requestDto.getReferenceId().isEmpty() || requestDto.getReferenceId().equals(SignatureConstant.REF_ID_SIGN_CONST)) {
+                X509Certificate cert = certificateResponse.getCertificateEntry().getChain()[0];
+                referenceId = SignatureUtil.getJwtSignAlgorithm(cert);
+            }
             String algorithm = (requestDto.getAlgorithm() == null || requestDto.getAlgorithm().isEmpty()) ?
                     SignatureAlgorithmIdentifyEnum.getAlgorithmIdentifier(referenceId) : requestDto.getAlgorithm();
             COSEProtectedHeaderBuilder protectedHeaderBuilder = coseHeaderBuilder.buildProtectedHeader(certificateResponse, requestDto, getCoseAlgorithm(algorithm), signatureUtil);

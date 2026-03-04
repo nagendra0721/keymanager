@@ -666,8 +666,6 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 			applicationId = signApplicationid;
 			referenceId = signRefid;
 		}
-//		String signAlgorithm = SignatureUtil.isDataValid(signatureReq.getSignAlgorithm()) ?
-//				signatureReq.getSignAlgorithm() : SignatureConstant.JWS_PS256_SIGN_ALGO_CONST;
 
 		SignatureCertificate certificateResponse = keymanagerService.getSignatureCertificate(applicationId,
 				Optional.of(referenceId), timestamp);

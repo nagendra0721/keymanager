@@ -452,11 +452,29 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 			keyPair = generateKeyPair(keyType);
 			signPrivateKey = keyPair.getPrivate();
 		}
-		X509Certificate x509Cert = CertificateUtility.generateX509Certificate(signPrivateKey, keyPair.getPublic(), certParams, 
-									signerPrincipal, signAlgorithm, provider.getName());
-		X509Certificate[] chain = new X509Certificate[] {x509Cert};
+
+		X509Certificate x509Cert;
+		if (keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.ED25519_KEY_TYPE) ||
+				keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.EDDSA_KEY_TYPE) ||
+				keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE) ||
+				keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.XDH_ALGORITHM)) {
+			KeyPairGenerator kpg;
+			try {
+				kpg = KeyPairGenerator.getInstance(KeymanagerConstant.ED25519_KEY_TYPE);
+			} catch (NoSuchAlgorithmException e) {
+				throw new KeystoreProcessingException(KeymanagerErrorCode.KEYSTORE_PROCESSING_ERROR.getErrorCode(),
+						KeymanagerErrorCode.KEYSTORE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
+			}
+			Provider sunECProvider = kpg.getProvider();
+			x509Cert = CertificateUtility.generateX509Certificate(signPrivateKey, keyPair.getPublic(), certParams,
+					signerPrincipal, signAlgorithm, sunECProvider.getName());
+		} else {
+			x509Cert = CertificateUtility.generateX509Certificate(signPrivateKey, keyPair.getPublic(), certParams,
+					signerPrincipal, signAlgorithm, provider.getName());
+		}
+		X509Certificate[] chain = new X509Certificate[]{x509Cert};
 		storeCertificate(alias, chain, keyPair.getPrivate());
-    }
+	}
 
 	private KeyPair generateKeyPair(String keyType) {
 		List<String> ecCurvesList = Stream.of(ECCurves.values()).filter(value -> !value.name().equals(ECCurves.ED25519.name()))
@@ -502,7 +520,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 
 	private KeyPair generateEd25519KeyPair() {
 		try {
-			KeyPairGenerator generator = KeyPairGenerator.getInstance(asymmetricEdKeyAlgorithm, provider);
+			KeyPairGenerator generator = KeyPairGenerator.getInstance(asymmetricEdKeyAlgorithm);
 			return generator.generateKeyPair();
 		} catch (java.security.NoSuchAlgorithmException e) {
 			throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(
@@ -620,7 +638,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 
     private KeyPair generateX25519KeyPair() {
         try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE, provider);
+            KeyPairGenerator generator = KeyPairGenerator.getInstance(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE);
             return generator.generateKeyPair();
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(

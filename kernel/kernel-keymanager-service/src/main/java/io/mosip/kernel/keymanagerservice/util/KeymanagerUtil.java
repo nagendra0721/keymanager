@@ -833,7 +833,8 @@ public class KeymanagerUtil {
 				publicKey.getAlgorithm().equals(KeymanagerConstant.EDDSA_KEY_TYPE))
 			return KeymanagerConstant.ED25519_KEY_TYPE;
 
-		if (publicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE))
+		if (publicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE) ||
+				publicKey.getAlgorithm().equals(KeymanagerConstant.XDH_ALGORITHM))
 			return KeymanagerConstant.X25519_KEY_TYPE;
 
 		SubjectPublicKeyInfo subjectPublicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());

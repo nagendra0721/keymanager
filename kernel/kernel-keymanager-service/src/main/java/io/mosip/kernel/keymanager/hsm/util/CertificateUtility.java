@@ -125,10 +125,7 @@ public class CertificateUtility {
 			certBuilder.addExtension(Extension.subjectKeyIdentifier, false, certExtUtils.createSubjectKeyIdentifier(publicKey));
 			certBuilder.addExtension(Extension.keyUsage, true, keyUsage);
 			X509CertificateHolder certHolder = certBuilder.build(certContentSigner);
-            if (providerName.equals("BC"))
-                return new JcaX509CertificateConverter().setProvider(providerName).getCertificate(certHolder);
-            else
-                return new JcaX509CertificateConverter().getCertificate(certHolder);
+			return new JcaX509CertificateConverter().getCertificate(certHolder);
 		} catch (OperatorCreationException | NoSuchAlgorithmException | CertificateException | IOException e) {
 			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
 					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
