@@ -645,7 +645,7 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 					jws.setProviderContext(provContext);
 				}
 				LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
-						"Found RSA Certificate for Signature verification.", keyAlgorithm);
+						"Found RSA Certificate for Signature verification. algorithm name: " + keyAlgorithm);
 				publicKey = certToVerify.getPublicKey();
 			}
 						
