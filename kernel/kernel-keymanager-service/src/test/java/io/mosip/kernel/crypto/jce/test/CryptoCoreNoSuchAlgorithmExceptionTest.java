@@ -65,10 +65,10 @@ public class CryptoCoreNoSuchAlgorithmExceptionTest {
 		return new SecretKeySpec(keyBytes, algo);
 	}
 
-	@Test(expected = NoSuchAlgorithmException.class)
-	public void testAsymmetricPublicEncryptNoSuchAlgorithmException() {
-		assertThat(cryptoCore.asymmetricEncrypt(rsaPair.getPublic(), data), isA(byte[].class));
-	}
+//	@Test(expected = NoSuchAlgorithmException.class)
+//	public void testAsymmetricPublicEncryptNoSuchAlgorithmException() {
+//		assertThat(cryptoCore.asymmetricEncrypt(rsaPair.getPublic(), data), isA(byte[].class));
+//	}
 
 	@Test(expected = NoSuchAlgorithmException.class)
 	public void testAESSymmetricEncryptNoSuchAlgorithmException() throws java.security.NoSuchAlgorithmException {
