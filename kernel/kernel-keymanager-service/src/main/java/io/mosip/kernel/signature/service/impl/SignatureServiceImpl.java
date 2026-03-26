@@ -639,11 +639,13 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 				LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
 					"KeyStore Provider Name:" + ecKeyStore.getKeystoreProviderName());
 				if (!ecKeyStore.getKeystoreProviderName().equals(
-						io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.KEYSTORE_TYPE_OFFLINE)) {
+						io.mosip.kernel.keymanager.hsm.constant.KeymanagerConstant.KEYSTORE_TYPE_OFFLINE) && !keyAlgorithm.equals(KeymanagerConstant.RSA)) {
 					ProviderContext provContext = new ProviderContext();
 					provContext.getSuppliedKeyProviderContext().setSignatureProvider(ecKeyStore.getKeystoreProviderName());
 					jws.setProviderContext(provContext);
 				}
+				LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
+						"Found RSA Certificate for Signature verification.", keyAlgorithm);
 				publicKey = certToVerify.getPublicKey();
 			}
 						
