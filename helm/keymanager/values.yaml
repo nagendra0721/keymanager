@@ -116,15 +116,15 @@ resources:
     cpu: 2000m
     memory: 6000Mi
   requests:
-    cpu: 2000m
-    memory: 6000Mi
+    cpu: 1000m
+    memory: 3600Mi
 additionalResources:
   ## Specify any JAVA_OPTS string here. These typically will be specified in conjunction with above resources
   ## Example: java_opts: "-Xms500M -Xmx500M"
   javaOpts: >-
     -XX:+UseZGC -XX:+ZGenerational -XX:+ZUncommit
     -XX:ZUncommitDelay=30 -XX:+ZProactive -XX:ZCollectionInterval=5
-    -Xms3600m -Xmx3600m -XX:SoftMaxHeapSize=3000m
+    -Xms2700m -Xmx3900m -XX:SoftMaxHeapSize=3000m
     -Djava.security.egd=file:/dev/urandom
     -XX:+UseContainerSupport -XX:MaxMetaspaceSize=480m -XX:MetaspaceSize=120m
     -XX:ReservedCodeCacheSize=180m -XX:InitialCodeCacheSize=45m
