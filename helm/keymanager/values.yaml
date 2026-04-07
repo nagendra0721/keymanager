@@ -124,7 +124,7 @@ additionalResources:
   javaOpts: >-
     -XX:+UseZGC -XX:+ZGenerational -XX:+ZUncommit
     -XX:ZUncommitDelay=30 -XX:+ZProactive -XX:ZCollectionInterval=5
-    -Xms5400m -Xmx5400m -XX:SoftMaxHeapSize=4900m
+    -Xms3000m -Xmx5400m -XX:SoftMaxHeapSize=4900m
     -Djava.security.egd=file:/dev/urandom
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
 ## Clamav container already runs as 'mosip' user, so we may not need to enable this
