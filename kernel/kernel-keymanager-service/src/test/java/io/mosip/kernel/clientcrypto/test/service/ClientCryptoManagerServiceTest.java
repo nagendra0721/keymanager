@@ -100,7 +100,6 @@ public class ClientCryptoManagerServiceTest {
         injectField(clientCryptoFacade, "symmetricKeyLength", 32);
 
         setStaticField(ClientCryptoFacade.class, "clientCryptoService", clientCryptoService);
-        setStaticField(ClientCryptoFacade.class, "secureRandom", new java.security.SecureRandom());
         setStaticField(Class.forName("io.mosip.kernel.clientcrypto.service.impl.LocalClientCryptoServiceImpl"),
                 "cryptoCore", cryptoCore);
 
@@ -117,7 +116,6 @@ public class ClientCryptoManagerServiceTest {
     @After
     public void tearDown() throws Exception {
         setStaticField(ClientCryptoFacade.class, "clientCryptoService", null);
-        setStaticField(ClientCryptoFacade.class, "secureRandom", null);
         setStaticField(Class.forName("io.mosip.kernel.clientcrypto.service.impl.LocalClientCryptoServiceImpl"),
                 "cryptoCore", null);
         Class<?> tpmClass = Class.forName("io.mosip.kernel.clientcrypto.service.impl.TPMClientCryptoServiceImpl");
