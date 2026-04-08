@@ -5,7 +5,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -25,7 +24,6 @@ import java.util.stream.Stream;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -145,7 +143,9 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
     private ThreadLocal<MessageDigest> MESSAGE_DIGEST;
 
     public static String AES_ECB_ALGO;
-    public static String AES_GCM_ALGO;
+	public static String AES_GCM_ALGO;
+
+	private static ThreadLocal<SecureRandom> SECURE_RANDOM_TL = null;
 
     @PostConstruct
     public void init() {
@@ -175,6 +175,10 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
                 throw new IllegalStateException("Unable to initialize MessageDigest", e);
             }
         });
+
+		SECURE_RANDOM_TL = ThreadLocal.withInitial(() -> {
+			try { return SecureRandom.getInstanceStrong(); } catch (Exception ignore) { return new SecureRandom(); }
+		});
     }
 
     @PreDestroy
@@ -187,6 +191,9 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 
         if (MESSAGE_DIGEST != null)
             MESSAGE_DIGEST.remove();
+
+		if (SECURE_RANDOM_TL != null)
+			SECURE_RANDOM_TL.remove();
     }
 
 	@Override
@@ -214,7 +221,7 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 		Key secretRandomKey = getDecryptedRandomKey(encryptedKeyData);
 		Key derivedKey = getDerivedKey(id, secretRandomKey);
 
-		SecureRandom sRandom = new SecureRandom();
+		SecureRandom sRandom = SECURE_RANDOM_TL.get();
 		List<CryptoDataDto> responseCryptoData = new ArrayList<>();
 		cryptoDataList.forEach(reqCryptoData -> {
 			String identifier = reqCryptoData.getIdentifier();

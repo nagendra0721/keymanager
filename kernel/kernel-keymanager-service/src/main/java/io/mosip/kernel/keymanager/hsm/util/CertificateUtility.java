@@ -45,7 +45,8 @@ import io.mosip.kernel.keymanager.hsm.constant.KeymanagerErrorCode;
  */
 public class CertificateUtility {
 
-	
+	private static final ThreadLocal<SecureRandom> SECURE_RANDOM_TL = ThreadLocal.withInitial(SecureRandom::new);
+
 	/**
 	 * Private constructor for CertificateUtility
 	 */
@@ -64,8 +65,9 @@ public class CertificateUtility {
 	 * @param validityTo         validityTo
 	 * @return The certificate
 	 */
+
 	public static X509Certificate generateX509Certificate(PrivateKey signPrivateKey, PublicKey publicKey, String commonName, String organizationalUnit,
-			String organization, String country, LocalDateTime validityFrom, LocalDateTime validityTo, String signAlgorithm, String providerName) { 
+														  String organization, String country, LocalDateTime validityFrom, LocalDateTime validityTo, String signAlgorithm, String providerName) {
 
 		X500Name rootCertIssuer = new X500Name(getCertificateAttributes(commonName, organizationalUnit, organization, country));
 		X500Name rootCertSubject = rootCertIssuer;
@@ -114,7 +116,7 @@ public class CertificateUtility {
 						String signAlgorithm, String providerName, LocalDateTime notBefore, LocalDateTime notAfter, KeyUsage keyUsage,
 						BasicConstraints basicConstraints) {
 		try {
-			BigInteger certSerialNum = new BigInteger(Long.toString(new SecureRandom().nextLong()));
+			BigInteger certSerialNum = new BigInteger(Long.toString(SECURE_RANDOM_TL.get().nextLong()));
 
 			ContentSigner certContentSigner = new JcaContentSignerBuilder(signAlgorithm).setProvider(providerName).build(signPrivateKey);
 			X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(certIssuer, certSerialNum, getDateFromLocalDateTime(notBefore),
@@ -135,7 +137,7 @@ public class CertificateUtility {
 														   String signAlgorithm, String providerName, LocalDateTime notBefore, LocalDateTime notAfter, KeyUsage keyUsage,
 														   BasicConstraints basicConstraints, GeneralName[] altNames) {
 		try {
-			BigInteger certSerialNum = new BigInteger(Long.toString(new SecureRandom().nextLong()));
+			BigInteger certSerialNum = new BigInteger(Long.toString(SECURE_RANDOM_TL.get().nextLong()));
 
 			ContentSigner certContentSigner = new JcaContentSignerBuilder(signAlgorithm).setProvider(providerName).build(signPrivateKey);
 			X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(certIssuer, certSerialNum, getDateFromLocalDateTime(notBefore),

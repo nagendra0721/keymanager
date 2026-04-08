@@ -29,7 +29,7 @@ import java.util.Objects;
 public class ClientCryptoFacade {
 
     private static final Logger LOGGER = KeymanagerLogger.getLogger(ClientCryptoFacade.class);
-    private static SecureRandom secureRandom = null;
+    private static final ThreadLocal<SecureRandom> SECURE_RANDOM_TL = ThreadLocal.withInitial(SecureRandom::new);
     private static ClientCryptoService clientCryptoService = null;
 
     @Autowired
@@ -201,11 +201,8 @@ public class ClientCryptoFacade {
     }
 
     public static byte[] generateRandomBytes(int length) {
-        if(secureRandom == null)
-            secureRandom = new SecureRandom();
-
         byte[] bytes = new byte[length];
-        secureRandom.nextBytes(bytes);
+        SECURE_RANDOM_TL.get().nextBytes(bytes);
         return bytes;
     }
 
