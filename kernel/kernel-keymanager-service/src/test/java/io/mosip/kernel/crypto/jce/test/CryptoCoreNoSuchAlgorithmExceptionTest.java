@@ -56,6 +56,10 @@ public class CryptoCoreNoSuchAlgorithmExceptionTest {
 		ReflectionTestUtils.setField(cryptoCore, "symmetricAlgorithm", "INVALIDALGO");
 		ReflectionTestUtils.setField(cryptoCore, "signAlgorithm", "INVALIDALGO");
 		ReflectionTestUtils.setField(cryptoCore, "passwordAlgorithm", "INVALIDALGO");
+		// Re-invoke init() to recreate ThreadLocal Cipher/Factory instances with the
+		// invalid algorithm names. Without this, the ThreadLocals still hold cached
+		// valid instances from the original @PostConstruct initialization.
+		ReflectionTestUtils.invokeMethod(cryptoCore, "init");
 	}
 
 	private SecretKeySpec setSymmetricUp(int length, String algo) throws java.security.NoSuchAlgorithmException {
