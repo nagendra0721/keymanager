@@ -117,7 +117,8 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 	@Value("${mosip.keymanager.argon2.hash.generate.parallelism:2}")
     private int argon2Parallelism;
 
-	private static SecureRandom secureRandom = null;
+	private static final ThreadLocal<SecureRandom> SECURE_RANDOM_TL = ThreadLocal.withInitial(SecureRandom::new);
+
 
 	/**
 	 * {@link KeyGenerator} instance
@@ -163,18 +164,14 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 					CryptomanagerConstant.GEN_ARGON2_HASH, "Loading Creating Cache for Object Key: " + objectKey);
 			if (objectKey.equals(CryptomanagerConstant.CACHE_AES_KEY)) {
 				javax.crypto.KeyGenerator keyGenerator = KeyGeneratorUtils.getKeyGenerator(AES_KEY_TYPE, 
-							AES_KEY_SIZE, new SecureRandom());
+							AES_KEY_SIZE, SECURE_RANDOM_TL.get());
 				return keyGenerator.generateKey();
 			} else if (objectKey.equals(CACHE_INT_COUNTER)) {
-				if(secureRandom == null)
-            		secureRandom = new SecureRandom();
-				
-				return new AtomicLong(secureRandom.nextLong());
+				return new AtomicLong(SECURE_RANDOM_TL.get().nextLong());
 			} 
 			return null;
 		})
 		.build();
-        
     }
 
 	/*
@@ -354,7 +351,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 						CryptomanagerErrorCode.INVALID_REQUEST.getErrorMessage());
 		}
 
-		SecureRandom sRandom = new SecureRandom(); 
+		SecureRandom sRandom = SECURE_RANDOM_TL.get();
 		byte[] pbeSalt = new byte[PBE_SALT_LENGTH];
 		sRandom.nextBytes(pbeSalt);
 
@@ -607,9 +604,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 			SecretKey aesKey = (SecretKey) saltGenParamsCache.get(CryptomanagerConstant.CACHE_AES_KEY);
 			AtomicLong intCounter = (AtomicLong) saltGenParamsCache.get(CryptomanagerConstant.CACHE_INT_COUNTER);
 			if (Objects.isNull(intCounter)) {
-				if(secureRandom == null)
-					secureRandom = new SecureRandom();
-				intCounter = new AtomicLong(secureRandom.nextLong());
+				intCounter = new AtomicLong(SECURE_RANDOM_TL.get().nextLong());
 			}
             long saltInput = intCounter.getAndIncrement();
 
@@ -653,11 +648,9 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		}
 		LOGGER.info(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.GEN_ARGON2_HASH, 
 						"Generating Random Salt using Secure Random because encrypted random bytes failed.");
-		if(secureRandom == null)
-            secureRandom = new SecureRandom();
 
         byte[] bytes = new byte[32];
-        secureRandom.nextBytes(bytes);
+        SECURE_RANDOM_TL.get().nextBytes(bytes);
         return bytes;
 	}
 }

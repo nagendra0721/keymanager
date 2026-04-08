@@ -52,12 +52,12 @@ class LocalClientCryptoServiceImpl implements ClientCryptoService {
     private static final String PUBLIC_KEY = "reg.pub";
     private static final String README = "readme.txt";
 
-    private static SecureRandom secureRandom = null;
     protected static CryptoCoreSpec<byte[], byte[], SecretKey, PublicKey, PrivateKey, String> cryptoCore;
     private ApplicationContext applicationContext;
     private Boolean useResidentServiceModuleKey;
     private String residentServiceAppId;
 
+    private static final ThreadLocal<SecureRandom> SECURE_RANDOM_TL = ThreadLocal.withInitial(SecureRandom::new);
 
     /**
      * Creates RSA Key pair under user's home directory and the same is used for further
@@ -74,7 +74,7 @@ class LocalClientCryptoServiceImpl implements ClientCryptoService {
         if(!doesKeysExists()) {
             setupKeysDir();
             KeyPairGenerator keyGenerator = KeyPairGenerator.getInstance(ALGORITHM);
-            keyGenerator.initialize(KEY_LENGTH, new SecureRandom());
+            keyGenerator.initialize(KEY_LENGTH, SECURE_RANDOM_TL.get());
             KeyPair keypair = keyGenerator.generateKeyPair();
             createKeyFile(PRIVATE_KEY, keypair.getPrivate().getEncoded());
             createKeyFile(PUBLIC_KEY, keypair.getPublic().getEncoded());
@@ -171,11 +171,8 @@ class LocalClientCryptoServiceImpl implements ClientCryptoService {
     }
 
     public static byte[] generateRandomBytes(int length) {
-        if(secureRandom == null)
-            secureRandom = new SecureRandom();
-
         byte[] bytes = new byte[length];
-        secureRandom.nextBytes(bytes);
+        SECURE_RANDOM_TL.get().nextBytes(bytes);
         return bytes;
     }
 

@@ -29,12 +29,14 @@ public class EC256SignatureProviderImpl implements SignatureProvider {
 
     private static final Logger LOGGER = KeymanagerLogger.getLogger(EC256SignatureProviderImpl.class);
 
+    private static final ThreadLocal<SecureRandom> SECURE_RANDOM_TL = ThreadLocal.withInitial(SecureRandom::new);
+
     @Override
     public String sign(PrivateKey privateKey, byte[] signData, String providerName) {
         
         try {
             Signature signatureObj = Signature.getInstance(SignatureConstant.EC256_ALGORITHM, providerName);
-            signatureObj.initSign(privateKey, new SecureRandom());
+            signatureObj.initSign(privateKey, SECURE_RANDOM_TL.get());
             signatureObj.update(signData);
             byte[] signatureData = signatureObj.sign();
             byte[] derConcatnated = EcdsaUsingShaAlgorithm.convertDerToConcatenated(signatureData, SignatureConstant.EC256_SIGNATURE_LENGTH);

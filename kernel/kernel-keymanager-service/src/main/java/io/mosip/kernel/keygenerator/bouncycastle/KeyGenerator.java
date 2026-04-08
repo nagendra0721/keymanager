@@ -70,6 +70,8 @@ public class KeyGenerator {
 	@Autowired
 	private ECKeyStore keyStore;
 
+	private static final ThreadLocal<SecureRandom> SECURE_RANDOM_TL = ThreadLocal.withInitial(SecureRandom::new);
+
 	/**
 	 * This method generates symmetric key
 	 * 
@@ -106,7 +108,7 @@ public class KeyGenerator {
 			return secureRandom;
 		}
 		if (!rngProviderEnabled) {
-			secureRandom = new SecureRandom();
+			secureRandom = SECURE_RANDOM_TL.get();
 			return secureRandom; 
 		}
 		try {
@@ -115,7 +117,7 @@ public class KeyGenerator {
 		} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
 			// ignoring this exception, because SecureRandom will be initialised with no argument (defaults to SHA1PRNG) 
 		}
-		secureRandom = new SecureRandom();
+		secureRandom = SECURE_RANDOM_TL.get();
 		return secureRandom;
 	}
 

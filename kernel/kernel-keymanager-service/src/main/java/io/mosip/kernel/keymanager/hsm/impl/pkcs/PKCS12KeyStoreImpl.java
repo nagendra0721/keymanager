@@ -134,6 +134,8 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
     
 	private SecureRandom secureRandom;
 
+	private static final ThreadLocal<SecureRandom> SECURE_RANDOM_TL = ThreadLocal.withInitial(SecureRandom::new);
+
 	public PKCS12KeyStoreImpl(Map<String, String> params) throws Exception {
 		LOGGER.warn("IT IS SUGGESTED NOT TO USE PKCS12 KEYSTORE TYPE IN PRODUCTION ENVIRONMENT");
         this.keystoreType = KeymanagerConstant.KEYSTORE_TYPE_PKCS12;
@@ -146,7 +148,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
         this.signAlgorithm  = params.get(KeymanagerConstant.CERT_SIGN_ALGORITHM);
         this.enableKeyReferenceCache = Boolean.parseBoolean(params.get(KeymanagerConstant.FLAG_KEY_REF_CACHE));
 		this.asymmetricECKeyAlgorithm = params.get(KeymanagerConstant.ASYM_KEY_EC_ALGORITHM);
-		this.secureRandom = new SecureRandom();
+		this.secureRandom = SECURE_RANDOM_TL.get();
 		initKeystore();
 		initKeyReferenceCache();
     }
