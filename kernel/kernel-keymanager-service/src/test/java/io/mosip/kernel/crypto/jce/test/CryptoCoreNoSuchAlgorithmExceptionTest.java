@@ -27,6 +27,7 @@ import io.mosip.kernel.core.crypto.spi.CryptoCoreSpec;
 import io.mosip.kernel.core.exception.NoSuchAlgorithmException;
 
 @RunWith(SpringRunner.class)
+@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest
 public class CryptoCoreNoSuchAlgorithmExceptionTest {
