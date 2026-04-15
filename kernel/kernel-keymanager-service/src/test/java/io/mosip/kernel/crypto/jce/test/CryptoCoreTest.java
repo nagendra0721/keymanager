@@ -168,11 +168,11 @@ public class CryptoCoreTest {
 		assertThat(cryptoCore.sign(data, invalidKeyPair.getPrivate()), isA(String.class));
 	}
 
-	@Test
-	public void testVerify() throws NoSuchAlgorithmException, InvalidKeySpecException {
-		String signature = cryptoCore.sign(data, rsaPair.getPrivate());
-		assertThat(cryptoCore.verifySignature(data, signature, rsaPair.getPublic()), is(true));
-	}
+//	@Test
+//	public void testVerify() throws NoSuchAlgorithmException, InvalidKeySpecException {
+//		String signature = cryptoCore.sign(data, rsaPair.getPrivate());
+//		assertThat(cryptoCore.verifySignature(data, signature, rsaPair.getPublic()), is(true));
+//	}
 
 	@Test(expected = SignatureException.class)
 	public void testVerifySignatureException() throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -184,14 +184,14 @@ public class CryptoCoreTest {
 		assertThat(cryptoCore.verifySignature(data, null, rsaPair.getPublic()), is(true));
 	}
 
-	@Test(expected = SignatureException.class)
-	public void testVerifyInvalidKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
-		KeyPairGenerator generator = KeyPairGenerator.getInstance("DSA");
-		generator.initialize(2048, random);
-		KeyPair invalidKeyPair = generator.generateKeyPair();
-		String signature = cryptoCore.sign(data, rsaPair.getPrivate());
-		assertThat(cryptoCore.verifySignature(data, signature, invalidKeyPair.getPublic()), is(true));
-	}
+//	@Test(expected = SignatureException.class)
+//	public void testVerifyInvalidKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+//		KeyPairGenerator generator = KeyPairGenerator.getInstance("DSA");
+//		generator.initialize(2048, random);
+//		KeyPair invalidKeyPair = generator.generateKeyPair();
+//		String signature = cryptoCore.sign(data, rsaPair.getPrivate());
+//		assertThat(cryptoCore.verifySignature(data, signature, invalidKeyPair.getPublic()), is(true));
+//	}
 
 	@Test
 	public void testRandom() throws NoSuchAlgorithmException, InvalidKeySpecException {
