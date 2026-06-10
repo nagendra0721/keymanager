@@ -33,19 +33,25 @@ public class EC256SignatureProviderImpl implements SignatureProvider {
 
     @Override
     public String sign(PrivateKey privateKey, byte[] signData, String providerName) {
-        
+
         try {
-            Signature signatureObj = Signature.getInstance(SignatureConstant.EC256_ALGORITHM, providerName);
+            // SoftHSM2 via SunPKCS11 fails with CKR_OPERATION_NOT_INITIALIZED when using
+            // SHA256withECDSA through multi-part C_SignUpdate/C_SignFinal streaming.
+            // Workaround: pre-hash with SHA-256 in software and sign with NONEwithECDSA
+            // (maps to CKM_ECDSA, one-shot C_Sign), which is universally supported.
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(signData);
+            Signature signatureObj = Signature.getInstance("NONEwithECDSA", providerName);
             signatureObj.initSign(privateKey, SECURE_RANDOM_TL.get());
-            signatureObj.update(signData);
+            signatureObj.update(hash);
             byte[] signatureData = signatureObj.sign();
             byte[] derConcatnated = EcdsaUsingShaAlgorithm.convertDerToConcatenated(signatureData, SignatureConstant.EC256_SIGNATURE_LENGTH);
             return CryptoUtil.encodeToURLSafeBase64(derConcatnated);
-        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | 
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException |
                     IOException | NoSuchProviderException e) {
             LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.JWS_SIGN, SignatureConstant.BLANK,
 					"Error while signing the data.", e);
-            throw new SignatureFailureException(SignatureErrorCode.SIGN_ERROR.getErrorCode(), 
+            throw new SignatureFailureException(SignatureErrorCode.SIGN_ERROR.getErrorCode(),
                         SignatureErrorCode.SIGN_ERROR.getErrorMessage(), e);
         }
     }

@@ -445,7 +445,29 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
             jwsHeaderCache.putIfAbsent(hdrKey, headerJson);
         }
 
-        // Build + sign using the cached header
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
+                "Supported Signature Algorithm: " +
+                        AlgorithmFactoryFactory.getInstance().getJwsAlgorithmFactory().getSupportedAlgorithms());
+        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
+                "Signature Algorithm for the input RefId: " + algoString);
+
+        // For EC keys, bypass jose4j signing to avoid PKCS11 CKM_ECDSA_SHA256 streaming
+        // issue (CKR_OPERATION_NOT_INITIALIZED on SoftHSM2). Construct JWT manually using
+        // the pre-hash approach in EC256SignatureProviderImpl.
+        if (privateKey.getAlgorithm().equals(KeymanagerConstant.EC_KEY_TYPE)) {
+            String providerName = certificateResponse.getProviderName();
+            String b64Header = java.util.Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+            String b64Payload = java.util.Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(dataToSign.getBytes(StandardCharsets.UTF_8));
+            byte[] signingInput = (b64Header + "." + b64Payload).getBytes(StandardCharsets.UTF_8);
+            String signAlgoConst = AlgorithmIdentifiers.ECDSA_USING_SECP256K1_CURVE_AND_SHA256.equals(algoString)
+                    ? SignatureConstant.JWS_ES256K_SIGN_ALGO_CONST : SignatureConstant.JWS_ES256_SIGN_ALGO_CONST;
+            String signature = SIGNATURE_PROVIDER.get(signAlgoConst).sign(privateKey, signingInput, providerName);
+            return b64Header + "." + (includePayload ? b64Payload : "") + "." + signature;
+        }
+
+        // Build + sign using jose4j for RSA / Ed25519 keys
         JsonWebSignature jwSign = new JsonWebSignature();
         try {
             jwSign.getHeaders().setFullHeaderAsJsonString(headerJson);
@@ -456,24 +478,15 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
                     SignatureErrorCode.SIGN_ERROR.getErrorMessage(), e);
         }
 
-        // Only set provider when needed to avoid provider lookups on every call
         if (!KeyReferenceIdConsts.ED25519_SIGN.name().equals(referenceId)) {
             ProviderContext provContext = new ProviderContext();
             provContext.getSuppliedKeyProviderContext().setSignatureProvider(ecKeyStore.getKeystoreProviderName());
             jwSign.setProviderContext(provContext);
         }
 
-        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
-                "Supported Signature Algorithm: " +
-                        AlgorithmFactoryFactory.getInstance().getJwsAlgorithmFactory().getSupportedAlgorithms());
-        LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
-                "Signature Algorithm for the input RefId: " + algoString);
-
         jwSign.setKey(privateKey);
         jwSign.setDoKeyValidation(false);
         jwSign.setPayload(dataToSign);
-
-        //jwSign.setAlgorithmHeaderValue(algoString);
 
         try {
             return includePayload
@@ -1090,16 +1103,41 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 
 		jwSign.setPayload(dataToSign);
 		String algoString = JWT_SIGNATURE_ALGO_IDENT.get(referenceId);
-		if (!KeyReferenceIdConsts.ED25519_SIGN.name().equals(referenceId)) {
-			ProviderContext provContext = new ProviderContext();
-			provContext.getSuppliedKeyProviderContext().setSignatureProvider(ecKeyStore.getKeystoreProviderName());
-			jwSign.setProviderContext(provContext);
-		}
 		LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
 				"Supported Signature Algorithm: " +
 						AlgorithmFactoryFactory.getInstance().getJwsAlgorithmFactory().getSupportedAlgorithms());
 		LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN, SignatureConstant.BLANK,
 				"Signature Algorithm for the input RefId: " + algoString);
+
+		// For EC keys, bypass jose4j signing to avoid PKCS11 CKM_ECDSA_SHA256 streaming
+		// issue (CKR_OPERATION_NOT_INITIALIZED on SoftHSM2). Compute the JWS header from
+		// the already-configured jwSign object, then sign manually using pre-hash approach.
+		if (privateKey.getAlgorithm().equals(KeymanagerConstant.EC_KEY_TYPE)) {
+			String providerName = certificateResponse.getProviderName();
+			jwSign.setAlgorithmHeaderValue(algoString);
+			String headerJson;
+			try {
+				headerJson = jwSign.getHeaders().getFullHeaderAsJsonString();
+			} catch (Exception e) {
+				throw new SignatureFailureException(SignatureErrorCode.SIGN_ERROR.getErrorCode(),
+						SignatureErrorCode.SIGN_ERROR.getErrorMessage(), e);
+			}
+			String b64Header = java.util.Base64.getUrlEncoder().withoutPadding()
+					.encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+			String b64Payload = java.util.Base64.getUrlEncoder().withoutPadding()
+					.encodeToString(dataToSign.getBytes(StandardCharsets.UTF_8));
+			byte[] signingInput = (b64Header + "." + b64Payload).getBytes(StandardCharsets.UTF_8);
+			String signAlgoConst = AlgorithmIdentifiers.ECDSA_USING_SECP256K1_CURVE_AND_SHA256.equals(algoString)
+					? SignatureConstant.JWS_ES256K_SIGN_ALGO_CONST : SignatureConstant.JWS_ES256_SIGN_ALGO_CONST;
+			String signature = SIGNATURE_PROVIDER.get(signAlgoConst).sign(privateKey, signingInput, providerName);
+			return b64Header + "." + (includePayload ? b64Payload : "") + "." + signature;
+		}
+
+		if (!KeyReferenceIdConsts.ED25519_SIGN.name().equals(referenceId)) {
+			ProviderContext provContext = new ProviderContext();
+			provContext.getSuppliedKeyProviderContext().setSignatureProvider(ecKeyStore.getKeystoreProviderName());
+			jwSign.setProviderContext(provContext);
+		}
 
 		jwSign.setAlgorithmHeaderValue(algoString);
 		jwSign.setKey(privateKey);

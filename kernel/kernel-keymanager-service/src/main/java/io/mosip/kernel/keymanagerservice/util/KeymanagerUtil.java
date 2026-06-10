@@ -3,15 +3,19 @@ package io.mosip.kernel.keymanagerservice.util;
 import static java.util.Arrays.copyOfRange;
 
 import java.io.ByteArrayInputStream;
+ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
@@ -64,7 +68,9 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
@@ -605,6 +611,12 @@ public class KeymanagerUtil {
             ContentSigner contentSigner;
             if (privateKey.getAlgorithm().equals(KeymanagerConstant.ED25519_KEY_TYPE)) {
                 contentSigner = new JcaContentSignerBuilder(edSignAlgorithm).build(privateKey);
+            } else if (privateKey.getAlgorithm().equals(KeymanagerConstant.EC_KEY_TYPE)) {
+				// SoftHSM2 via SunPKCS11 fails with CKR_OPERATION_NOT_INITIALIZED when using
+				// SHA256withECDSA through the multi-part C_SignUpdate/C_SignFinal streaming interface.
+				// Workaround: pre-hash with SHA-256 in software and sign with NONEwithECDSA
+				// (maps to CKM_ECDSA, one-shot C_Sign), which is universally supported.
+				contentSigner = buildECContentSigner(privateKey, getSignatureAlgorithm(keyAlgorithm));
             } else {
                 contentSigner = new JcaContentSignerBuilder(getSignatureAlgorithm(keyAlgorithm)).setProvider(keyStore.getKeystoreProviderName()).build(privateKey);
             }
@@ -614,6 +626,38 @@ public class KeymanagerUtil {
 		} catch (OperatorCreationException exp) {
 			throw new KeymanagerServiceException(KeymanagerErrorConstant.INTERNAL_SERVER_ERROR.getErrorCode(),
 						KeymanagerErrorConstant.INTERNAL_SERVER_ERROR.getErrorMessage(), exp);
+		}
+	}
+
+	private ContentSigner buildECContentSigner(PrivateKey privateKey, String sigAlgorithm) {
+		try {
+			Signature pkcs11Sig = Signature.getInstance("NONEwithECDSA", keyStore.getKeystoreProviderName());
+			pkcs11Sig.initSign(privateKey);
+			AlgorithmIdentifier algId = new DefaultSignatureAlgorithmIdentifierFinder().find(sigAlgorithm);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			return new ContentSigner() {
+				@Override
+				public AlgorithmIdentifier getAlgorithmIdentifier() { return algId; }
+
+				@Override
+				public OutputStream getOutputStream() { return baos; }
+
+				@Override
+				public byte[] getSignature() {
+					try {
+						MessageDigest digest = MessageDigest.getInstance("SHA-256");
+						byte[] hash = digest.digest(baos.toByteArray());
+						pkcs11Sig.update(hash);
+						return pkcs11Sig.sign();
+					} catch (Exception e) {
+						throw new KeymanagerServiceException(KeymanagerErrorConstant.INTERNAL_SERVER_ERROR.getErrorCode(),
+								KeymanagerErrorConstant.INTERNAL_SERVER_ERROR.getErrorMessage(), e);
+					}
+				}
+			};
+		} catch (Exception e) {
+			throw new KeymanagerServiceException(KeymanagerErrorConstant.INTERNAL_SERVER_ERROR.getErrorCode(),
+					KeymanagerErrorConstant.INTERNAL_SERVER_ERROR.getErrorMessage(), e);
 		}
 	}
 

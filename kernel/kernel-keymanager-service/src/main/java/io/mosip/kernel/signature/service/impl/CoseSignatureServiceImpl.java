@@ -346,7 +346,10 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
         try {
             Signature verifier;
             if (keyAlgorithm.equals(KeymanagerConstant.EC_KEY_TYPE)) {
-                verifier = Signature.getInstance(AlgorithmInstanceEnum.getAlgoInstance(algorithm), ecKeyStore.getKeystoreProviderName());
+                // Public key from a parsed certificate is a software key — do NOT force the
+                // PKCS11 provider, as that causes CKR_OPERATION_NOT_INITIALIZED with SoftHSM2.
+                // Use default JCA provider selection (SunEC / BC) which handles software EC keys.
+                verifier = Signature.getInstance(AlgorithmInstanceEnum.getAlgoInstance(algorithm));
                 verifier.initVerify(publicKey);
                 verifier.update(sigStructure.encode());
                 return verifier.verify(convertRawECSignatureToDER(coseSign1.getSignature().getValue()));
@@ -356,7 +359,7 @@ public class CoseSignatureServiceImpl implements CoseSignatureService {
                 verifier.update(sigStructure.encode());
                 return verifier.verify(coseSign1.getSignature().getValue());
             }
-        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | SignatureException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             LOGGER.error(SignatureConstant.SESSIONID, SignatureConstant.COSE_VERIFY, SignatureConstant.BLANK,
                     "Error occurred while verifying signature.", e);
             throw new SignatureFailureException(SignatureErrorCode.COSE_VERIFY_ERROR.getErrorCode(),

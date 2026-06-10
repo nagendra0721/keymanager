@@ -268,7 +268,9 @@ public class PKCS11KeyStoreImpl implements ECKeyStore {
 	public Key getKey(String alias) {
 		Key key = null;
 		try {
+			long startTime = System.currentTimeMillis();
 			key = keyStore.getKey(alias, keystorePwdCharArr);
+			LOGGER.debug("sessionId", "KeyStoreImpl","getKey", "HSM interaction time(ms): " + (System.currentTimeMillis() - startTime));
 		} catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e) {
 			throw new KeystoreProcessingException(KeymanagerErrorCode.KEYSTORE_PROCESSING_ERROR.getErrorCode(),
 					KeymanagerErrorCode.KEYSTORE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
