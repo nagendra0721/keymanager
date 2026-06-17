@@ -255,7 +255,11 @@ public class KeymanagerServiceImpl implements KeymanagerService {
 				return ImmutablePair.of(uniqueIdentifier, x509Certificate);
 			}
 		} else {
-			keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams);
+			if (!masterKeyAlgorithm.trim().equals(KeymanagerConstant.RSA)) {
+				keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams, eccCurve);
+			} else {
+				keyStore.generateAndStoreAsymmetricKey(alias, rootKeyAlias, certParams);
+			}
 		}
 		X509Certificate x509Cert = (X509Certificate) keyStore.getCertificate(alias);
 		String certThumbprint = cryptomanagerUtil.getCertificateThumbprintInHex(x509Cert);

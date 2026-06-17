@@ -52,7 +52,6 @@ import io.mosip.kernel.keymanagerservice.repository.KeyAliasRepository;
 import io.mosip.kernel.keymanagerservice.service.KeymanagerService;
 import io.mosip.kernel.partnercertservice.constant.PartnerCertManagerConstants;
 import jakarta.annotation.PostConstruct;
-import io.mosip.kernel.core.keymanager.spi.KeyStore;
 import io.mosip.kernel.cryptomanager.service.EcCryptoOperation;
 import io.mosip.kernel.keymanagerservice.constant.ECCurves;
 import org.apache.commons.codec.binary.Base64;

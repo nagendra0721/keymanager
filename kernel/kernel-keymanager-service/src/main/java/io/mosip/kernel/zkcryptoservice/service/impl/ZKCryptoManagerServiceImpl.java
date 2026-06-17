@@ -508,17 +508,17 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 			break;
 		}
 
-		Optional<io.mosip.kernel.keymanagerservice.entity.KeyStore> dbKeyStore = keyStoreRepository.findByAlias(kyAlias);
-		Optional<KeyAlias> keyAliasObj = keyAliasRepository.findById(Objects.requireNonNull(kyAlias));
-		String certificateData = dbKeyStore.get().getCertificateData();
-		X509Certificate x509Cert = (X509Certificate) keymanagerUtil.convertToCertificate(certificateData);
-
 		if (Objects.isNull(encRandomKey)) {
-			LOGGER.error(ZKCryptoManagerConstants.SESSIONID, ZKCryptoManagerConstants.RE_ENCRYPT_RANDOM_KEY, 
+			LOGGER.error(ZKCryptoManagerConstants.SESSIONID, ZKCryptoManagerConstants.RE_ENCRYPT_RANDOM_KEY,
 					ZKCryptoManagerConstants.RE_ENCRYPT_RANDOM_KEY, "Thumbprint matching key not found in DB.");
 			throw new ZKCryptoException(ZKCryptoErrorConstants.INVALID_ENCRYPTED_RANDOM_KEY.getErrorCode(),
 						ZKCryptoErrorConstants.INVALID_ENCRYPTED_RANDOM_KEY.getErrorMessage());
 		}
+
+		Optional<io.mosip.kernel.keymanagerservice.entity.KeyStore> dbKeyStore = keyStoreRepository.findByAlias(kyAlias);
+		Optional<KeyAlias> keyAliasObj = keyAliasRepository.findById(Objects.requireNonNull(kyAlias));
+		String certificateData = dbKeyStore.get().getCertificateData();
+		X509Certificate x509Cert = (X509Certificate) keymanagerUtil.convertToCertificate(certificateData);
 
 		PrivateKey privateKey = (PrivateKey) cryptomanagerUtil.getEncryptedPrivateKey(keyAliasObj.get().getApplicationId(), Optional.ofNullable(keyAliasObj.get().getReferenceId()))[0];
 		SymmetricKeyRequestDto symmetricKeyRequestDto = new SymmetricKeyRequestDto(pubKeyApplicationId, localDateTimeStamp, pubKeyReferenceId, encRandomKey, true);

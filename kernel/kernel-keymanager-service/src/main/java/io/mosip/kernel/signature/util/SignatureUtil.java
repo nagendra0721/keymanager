@@ -32,7 +32,6 @@ import com.nimbusds.jose.util.Base64URL;
 import io.mosip.kernel.keymanagerservice.constant.ECCurves;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerErrorConstant;
-import io.mosip.kernel.keymanagerservice.constant.KeymanagerErrorConstant;
 import io.mosip.kernel.keymanagerservice.exception.KeymanagerServiceException;
 import io.mosip.kernel.keymanagerservice.util.KeymanagerUtil;
 import io.mosip.kernel.partnercertservice.service.spi.PartnerCertificateManagerService;

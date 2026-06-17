@@ -410,10 +410,15 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
         }
         final String keyId = SignatureUtil.convertHexToBase64(certificateResponse.getUniqueIdentifier());
 
-        // Alg selection from referenceId (same defaults)
-        String algoString = JWT_SIGNATURE_ALGO_IDENT.get(referenceId);
-        if (algoString == null || algoString.isBlank()) {
-            algoString = AlgorithmIdentifiers.RSA_USING_SHA256;
+        // Alg selection: for default SIGN/empty refID derive from actual cert (handles EC sign certs)
+        String algoString;
+        if (referenceId.equals(KeymanagerConstant.EMPTY) || referenceId.equals(certificateSignRefID)) {
+            algoString = SignatureUtil.getJwtSignAlgorithm(x509Certificate);
+        } else {
+            algoString = JWT_SIGNATURE_ALGO_IDENT.get(referenceId);
+            if (algoString == null || algoString.isBlank()) {
+                algoString = AlgorithmIdentifiers.RSA_USING_SHA256;
+            }
         }
 
         // --- Header caching: build a stable cache key for this exact header shape ---
