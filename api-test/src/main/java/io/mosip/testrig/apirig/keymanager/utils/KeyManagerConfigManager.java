@@ -1,0 +1,29 @@
+package io.mosip.testrig.apirig.keymanager.utils;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.log4j.Logger;
+
+import io.mosip.testrig.apirig.keymanager.testrunner.MosipTestRunner;
+import io.mosip.testrig.apirig.utils.ConfigManager;
+
+public class KeyManagerConfigManager extends ConfigManager {
+	private static final Logger LOGGER = Logger.getLogger(KeyManagerConfigManager.class);
+
+	public static void init() {
+		Map<String, Object> moduleSpecificPropertiesMap = new HashMap<>();
+		try {
+			String path = MosipTestRunner.getGlobalResourcePath() + "/config/keymanager.properties";
+			Properties props = getproperties(path);
+			for (String key : props.stringPropertyNames()) {
+				moduleSpecificPropertiesMap.put(key, props.getProperty(key));
+			}
+		} catch (Exception e) {
+			LOGGER.error("Failed to load keymanager.properties: " + e.getMessage());
+			throw new RuntimeException("Failed to load keymanager.properties", e);
+		}
+		init(moduleSpecificPropertiesMap);
+	}
+}
