@@ -6,7 +6,7 @@ import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.kernel.crypto.jce.constant.SecurityExceptionCodeConstant;
 import io.mosip.kernel.crypto.jce.util.CryptoUtils;
 import io.mosip.kernel.cryptomanager.constant.CryptomanagerConstant;
-import io.mosip.kernel.cryptomanager.service.EcCryptoOperation;
+import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
 import io.mosip.kernel.keymanagerservice.logger.KeymanagerLogger;
 import io.mosip.kernel.core.crypto.exception.InvalidKeyException;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 @Service
-public class EcCryptoOperationImpl implements EcCryptoOperation {
+public class EcCryptomanagerServiceImpl implements EcCryptomanagerService {
 
     private static final String AES = "AES";
 

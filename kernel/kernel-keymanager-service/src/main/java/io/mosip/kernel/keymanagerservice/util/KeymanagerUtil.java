@@ -52,7 +52,7 @@ import io.mosip.kernel.keymanagerservice.repository.KeyAliasRepository;
 import io.mosip.kernel.keymanagerservice.service.KeymanagerService;
 import io.mosip.kernel.partnercertservice.constant.PartnerCertManagerConstants;
 import jakarta.annotation.PostConstruct;
-import io.mosip.kernel.cryptomanager.service.EcCryptoOperation;
+import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
 import io.mosip.kernel.keymanagerservice.constant.ECCurves;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -63,7 +63,6 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -77,7 +76,6 @@ import org.bouncycastle.util.io.pem.PemReader;
 import org.cache2k.Cache;
 import org.cache2k.Cache2kBuilder;
 import org.cache2k.expiry.Expiry;
-import org.jose4j.jws.AlgorithmIdentifiers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -219,7 +217,7 @@ public class KeymanagerUtil {
 	private CryptoCoreSpec<byte[], byte[], SecretKey, PublicKey, PrivateKey, String> cryptoCore;
 
     @Autowired
-    private EcCryptoOperation ecCryptoOperation;
+    private EcCryptomanagerService ecCryptoOperation;
 
 	@Autowired
 	SubjectAlternativeNamesHelper sanService;
@@ -821,5 +819,9 @@ public class KeymanagerUtil {
 	        );
 	    }
 	    return curveName;
+	}
+
+	public static String getTrimmedValue(String value) {
+		return (value == null || value.trim().isEmpty()) ? KeymanagerConstant.EMPTY : value;
 	}
 }

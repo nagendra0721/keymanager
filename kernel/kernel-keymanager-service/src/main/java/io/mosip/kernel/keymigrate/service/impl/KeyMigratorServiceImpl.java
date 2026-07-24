@@ -23,7 +23,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import io.mosip.kernel.core.util.DateUtils2;
-import io.mosip.kernel.cryptomanager.service.EcCryptoOperation;
+import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -127,7 +127,7 @@ public class KeyMigratorServiceImpl implements KeyMigratorService {
 	KeyAliasRepository keyAliasRepository;
 
     @Autowired
-    EcCryptoOperation ecCrypto;
+    EcCryptomanagerService ecCrypto;
 
     @Override
     public KeyMigrateBaseKeyResponseDto migrateBaseKey(KeyMigrateBaseKeyRequestDto baseKeyMigrateRequest){

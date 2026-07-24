@@ -622,6 +622,8 @@ public class SignatureUtil {
 			ASN1ObjectIdentifier curveOid = (ASN1ObjectIdentifier) subjectPublicKeyInfo.getAlgorithm().getParameters();
 
 			return mapCurveOidToCurveName(curveOid.getId());
+		} else if (KeymanagerConstant.ED25519_KEY_TYPE.equalsIgnoreCase(algorithm) || KeymanagerConstant.EDDSA_KEY_TYPE.equals(algorithm)) {
+			return AlgorithmIdentifiers.EDDSA;
 		}
 		return AlgorithmIdentifiers.RSA_USING_SHA256;
 	}
@@ -632,6 +634,17 @@ public class SignatureUtil {
 			case KeymanagerConstant.EC_SECP256K1_OID -> AlgorithmIdentifiers.ECDSA_USING_SECP256K1_CURVE_AND_SHA256;
 			default -> throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorCode(),
 					KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorMessage());
+		};
+	}
+
+	public static String getSigningAlgorithm(String algorithm) {
+		return switch (algorithm) {
+			case KeymanagerConstant.RSA ->  AlgorithmIdentifiers.RSA_USING_SHA256;
+			case KeymanagerConstant.EC_KEY_TYPE ->  AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256;
+			case KeymanagerConstant.EDDSA_KEY_TYPE -> AlgorithmIdentifiers.EDDSA;
+			case KeymanagerConstant.ED25519_KEY_TYPE -> AlgorithmIdentifiers.EDDSA;
+			default -> throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(KeymanagerErrorConstant.NO_SUCH_ALGORITHM_EXCEPTION.getErrorCode(),
+					KeymanagerErrorConstant.NO_SUCH_ALGORITHM_EXCEPTION.getErrorMessage());
 		};
 	}
 }

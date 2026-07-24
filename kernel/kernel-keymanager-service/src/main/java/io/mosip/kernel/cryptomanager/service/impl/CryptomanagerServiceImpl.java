@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.mosip.kernel.core.util.DateUtils2;
-import io.mosip.kernel.cryptomanager.service.EcCryptoOperation;
+import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant;
 import jakarta.annotation.PostConstruct;
 import javax.crypto.BadPaddingException;
@@ -151,7 +151,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 	KeymanagerUtil keymanagerUtil;
 
 	@Autowired
-    EcCryptoOperation ecCryptoOperation;
+	EcCryptomanagerService ecCryptoOperation;
 
 	private Cache<String, Object> saltGenParamsCache = null;
 
@@ -376,6 +376,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 			byte[] decryptedData = ecCryptoOperation.asymmetricEcDecrypt(privateKey, encryptedData, aad, ecCurveName);
 			CryptomanagerResponseDto cryptoResponseDto = new CryptomanagerResponseDto();
 			cryptoResponseDto.setData(CryptoUtil.encodeToURLSafeBase64(decryptedData));
+			return cryptoResponseDto;
 		}
 	}
 
@@ -540,12 +541,17 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		
 		LOGGER.info(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT, 
 					"JWE Encryption Started.");
-		
+		String algName = certificate.getPublicKey().getAlgorithm();
+
 		JsonWebEncryption jsonWebEncrypt = new JsonWebEncryption();
 
 		jsonWebEncrypt.setHeader(CryptomanagerConstant.JSON_CONTENT_TYPE_KEY, CryptomanagerConstant.JSON_CONTENT_TYPE_VALUE);
 		jsonWebEncrypt.setHeader(CryptomanagerConstant.JSON_HEADER_TYPE_KEY, CryptomanagerConstant.JSON_CONTENT_TYPE_VALUE);
-		jsonWebEncrypt.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.RSA_OAEP_256);
+		if (algName.equalsIgnoreCase(KeymanagerConstant.RSA))
+			jsonWebEncrypt.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.RSA_OAEP_256);
+		else
+			jsonWebEncrypt.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.ECDH_ES_A256KW);
+
 		jsonWebEncrypt.setEncryptionMethodHeaderParameter(ContentEncryptionAlgorithmIdentifiers.AES_256_GCM);
 		jsonWebEncrypt.setKey(certificate.getPublicKey());
 		String certThumbprint = CryptoUtil.encodeToURLSafeBase64(cryptomanagerUtil.getCertificateThumbprint(certificate));

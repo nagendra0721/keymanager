@@ -3,7 +3,7 @@ package io.mosip.kernel.cryptomanager.service;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
-public interface EcCryptoOperation {
+public interface EcCryptomanagerService {
 
     /**
      *

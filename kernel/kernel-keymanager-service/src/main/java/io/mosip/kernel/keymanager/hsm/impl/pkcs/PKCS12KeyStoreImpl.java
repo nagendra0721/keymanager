@@ -476,7 +476,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 									.collect(Collectors.toList());
 		if (KeymanagerConstant.RSA_KEY_TYPE.equals(keyType))
 			return generateRSAKeyPair();
-		else if (ecCurvesList.contains(keyType.toUpperCase()))
+		else if (ecCurvesList.contains(keyType.toLowerCase()))
 			return generateECKeyPair(keyType);
 		else if (KeymanagerConstant.ED25519_KEY_TYPE.equals(keyType))
 			return generateEd25519KeyPair();
@@ -488,7 +488,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 
 	private KeyPair generateRSAKeyPair() {
 		try {
-			KeyPairGenerator generator = KeyPairGenerator.getInstance(asymmetricKeyAlgorithm, provider);
+			KeyPairGenerator generator = KeyPairGenerator.getInstance(KeymanagerConstant.RSA_KEY_TYPE, provider);
 			generator.initialize(asymmetricKeyLength, secureRandom);
 			return generator.generateKeyPair();
 		} catch (java.security.NoSuchAlgorithmException e) {

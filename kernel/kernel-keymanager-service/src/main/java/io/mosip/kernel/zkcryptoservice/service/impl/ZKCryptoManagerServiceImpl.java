@@ -5,11 +5,9 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,7 +24,6 @@ import java.util.stream.Stream;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -34,8 +31,7 @@ import javax.crypto.spec.SecretKeySpec;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import io.mosip.kernel.core.util.DateUtils2;
-import io.mosip.kernel.cryptomanager.service.EcCryptoOperation;
-import io.mosip.kernel.keymanager.hsm.util.CertificateUtility;
+import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
 import io.mosip.kernel.keymanagerservice.repository.KeyAliasRepository;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.InitializingBean;
@@ -139,10 +135,13 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 	CryptomanagerUtils cryptomanagerUtil;
 
 	@Autowired
-	EcCryptoOperation ecCryptoCore;
+	EcCryptomanagerService ecCryptoCore;
 
 	@Autowired
 	KeyAliasRepository keyAliasRepository;
+
+	@Autowired
+	EcCryptomanagerService ecCryptomanagerService;
 
 
 	@Autowired

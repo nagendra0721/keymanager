@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.mosip.kernel.cryptomanager.service.EcCryptoOperation;
+import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
 import jakarta.annotation.PostConstruct;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -31,6 +31,7 @@ import javax.crypto.SecretKey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,7 +166,7 @@ public class BaseKeysMigrator {
 	CryptomanagerUtils cryptomanagerUtil;
 
     @Autowired
-    EcCryptoOperation ecCrypto;
+    EcCryptomanagerService ecCrypto;
 
 
 	@Autowired

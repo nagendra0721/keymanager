@@ -383,12 +383,15 @@ public class CryptomanagerUtils {
 	public void validateEncKeySize(Certificate encCert) {
 
 		if (validateKeySize) {
-			RSAPublicKey rsaPublicKey = (RSAPublicKey) encCert.getPublicKey();
-			if (rsaPublicKey.getModulus().bitLength() != 2048) {
-				LOGGER.error(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT,
-						"Not Allowed to preform encryption with Key size not equal to 2048 bit.");
-				throw new CryptoManagerSerivceException(CryptomanagerErrorCode.ENCRYPT_NOT_ALLOWED_ERROR.getErrorCode(),
-						CryptomanagerErrorCode.ENCRYPT_NOT_ALLOWED_ERROR.getErrorMessage());
+			String algorithmName = encCert.getPublicKey().getAlgorithm();
+			if (algorithmName.equalsIgnoreCase(KeymanagerConstant.RSA)) {
+				RSAPublicKey rsaPublicKey = (RSAPublicKey) encCert.getPublicKey();
+				if (rsaPublicKey.getModulus().bitLength() != 2048) {
+					LOGGER.error(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT,
+							"Not Allowed to preform encryption with Key size not equal to 2048 bit.");
+					throw new CryptoManagerSerivceException(CryptomanagerErrorCode.ENCRYPT_NOT_ALLOWED_ERROR.getErrorCode(),
+							CryptomanagerErrorCode.ENCRYPT_NOT_ALLOWED_ERROR.getErrorMessage());
+				}
 			}
 		}
 	}
