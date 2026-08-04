@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import io.mosip.kernel.core.util.DateUtils2;
 import io.mosip.kernel.cryptomanager.service.EcCryptomanagerService;
+import io.mosip.kernel.keymanagerservice.constant.ECCurves;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant;
 import jakarta.annotation.PostConstruct;
 import javax.crypto.BadPaddingException;
@@ -151,7 +152,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 	KeymanagerUtil keymanagerUtil;
 
 	@Autowired
-	EcCryptomanagerService ecCryptoOperation;
+	EcCryptomanagerService ecCryptomanagerService;
 
 	private Cache<String, Object> saltGenParamsCache = null;
 
@@ -258,13 +259,15 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 					"Found the cerificate, proceeding with ecc key encryption.");
 
 			byte[] aad = cryptomanagerUtil.generateRandomBytes(CryptomanagerConstant.GCM_AAD_LENGTH);
-			byte[] encryptedData = ecCryptoOperation.asymmetricEcEncrypt(publicKey, cryptomanagerUtil.decodeBase64Data(cryptoRequestDto.getData()), null, aad, ecCurveName);
+			String curveName = keymanagerUtil.getEcCurveName(publicKey);
+			byte[] encryptedData = ecCryptomanagerService.asymmetricEcEncrypt(publicKey,
+					cryptomanagerUtil.decodeBase64Data(cryptoRequestDto.getData()), null, aad, curveName);
 			byte[] encryptedDataWithIv = cryptomanagerUtil.concatByteArrays(aad, encryptedData);
 
 			LOGGER.info(CryptomanagerConstant.SESSIONID, CryptomanagerConstant.ENCRYPT, CryptomanagerConstant.ENCRYPT,
 					"ECC key encryption completed.");
 
-			byte[] headerBytes = cryptomanagerUtil.getHeaderByte(ecCurveName);
+			byte[] headerBytes = cryptomanagerUtil.getHeaderByte(curveName);
 
 			byte[] concatedData = cryptomanagerUtil.concatCertThumbprint(certThumbprint, encryptedDataWithIv);
 			byte[] finalEncKeyBytes = CryptoUtil.combineByteArray(concatedData, headerBytes, keySplitter);
@@ -373,7 +376,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 			byte[] aad = Arrays.copyOfRange(encryptedDataWithIv, 0, CryptomanagerConstant.GCM_AAD_LENGTH);
 			byte[] encryptedData = Arrays.copyOfRange(encryptedDataWithIv, CryptomanagerConstant.GCM_AAD_LENGTH,encryptedDataWithIv.length);
 
-			byte[] decryptedData = ecCryptoOperation.asymmetricEcDecrypt(privateKey, encryptedData, aad, ecCurveName);
+			byte[] decryptedData = ecCryptomanagerService.asymmetricEcDecrypt(privateKey, encryptedData, aad, ecCurveName);
 			CryptomanagerResponseDto cryptoResponseDto = new CryptomanagerResponseDto();
 			cryptoResponseDto.setData(CryptoUtil.encodeToURLSafeBase64(decryptedData));
 			return cryptoResponseDto;
@@ -505,7 +508,15 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 		cryptomanagerUtil.validateEncKeySize(encCertificate);
 		LOGGER.info(CryptomanagerConstant.SESSIONID, this.getClass().getSimpleName(), CryptomanagerConstant.JWT_ENCRYPT, 
 						"Key Size validated, validing input data.");
-		
+
+		String algorithm = encCertificate.getPublicKey().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA)
+				? KeymanagerConstant.RSA : keymanagerUtil.getEcCurveName(encCertificate.getPublicKey());
+		if (algorithm.equalsIgnoreCase(ECCurves.SECP256K1.name())) {
+			throw new CryptoManagerSerivceException(
+					CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorCode(),
+					String.format(CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorMessage(), algorithm));
+		}
+
 		String dataToEncrypt = jwtEncryptRequestDto.getData();
 		cryptomanagerUtil.validateEncryptData(dataToEncrypt);
 

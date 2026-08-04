@@ -135,14 +135,10 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 	CryptomanagerUtils cryptomanagerUtil;
 
 	@Autowired
-	EcCryptomanagerService ecCryptoCore;
+	EcCryptomanagerService ecCryptomanagerService;
 
 	@Autowired
 	KeyAliasRepository keyAliasRepository;
-
-	@Autowired
-	EcCryptomanagerService ecCryptomanagerService;
-
 
 	@Autowired
 	private CryptoCoreSpec<byte[], byte[], SecretKey, PublicKey, PrivateKey, String> cryptoCore;
@@ -464,7 +460,7 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 			PublicKey publicKey = x509Cert.getPublicKey();
 
 			byte[] encryptedRandomKey = publicKey.getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA) ? cryptoCore.asymmetricEncrypt(publicKey, secretRandomKey.getEncoded()) :
-					ecCryptoCore.asymmetricEcEncrypt(publicKey, secretRandomKey.getEncoded(), keymanagerUtil.getEcCurveName(publicKey));
+					ecCryptomanagerService.asymmetricEcEncrypt(publicKey, secretRandomKey.getEncoded(), keymanagerUtil.getEcCurveName(publicKey));
 
 			byte[] certThumbprint = cryptomanagerUtil.getCertificateThumbprint(x509Cert);
 			byte[] concatedData = cryptomanagerUtil.concatCertThumbprint(certThumbprint, encryptedRandomKey);
@@ -526,7 +522,7 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 		SymmetricKeyRequestDto symmetricKeyRequestDto = new SymmetricKeyRequestDto(pubKeyApplicationId, localDateTimeStamp, pubKeyReferenceId, encRandomKey, true);
 
 		String randomKey = x509Cert.getPublicKey().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA) ? keyManagerService.decryptSymmetricKey(symmetricKeyRequestDto).getSymmetricKey() :
-				CryptoUtil.encodeToURLSafeBase64(ecCryptoCore.asymmetricEcDecrypt(privateKey, encRandomKeyBytes, null, keymanagerUtil.getEcCurveName(x509Cert.getPublicKey())));
+				CryptoUtil.encodeToURLSafeBase64(ecCryptomanagerService.asymmetricEcDecrypt(privateKey, encRandomKeyBytes, null, keymanagerUtil.getEcCurveName(x509Cert.getPublicKey())));
 		String encryptedRandomKey = getEncryptedRandomKey(Base64.getEncoder().encodeToString(CryptoUtil.decodeURLSafeBase64(randomKey)));
 		ReEncryptRandomKeyResponseDto responseDto = new ReEncryptRandomKeyResponseDto();
 		responseDto.setEncryptedKey(encryptedRandomKey);

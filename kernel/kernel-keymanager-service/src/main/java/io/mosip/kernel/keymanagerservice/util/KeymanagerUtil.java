@@ -217,7 +217,7 @@ public class KeymanagerUtil {
 	private CryptoCoreSpec<byte[], byte[], SecretKey, PublicKey, PrivateKey, String> cryptoCore;
 
     @Autowired
-    private EcCryptomanagerService ecCryptoOperation;
+    private EcCryptomanagerService ecCryptomanagerService;
 
 	@Autowired
 	SubjectAlternativeNamesHelper sanService;
@@ -319,7 +319,7 @@ public class KeymanagerUtil {
 			encryptedSymmetricKey = cryptoCore.asymmetricEncrypt(masterKey, symmetricKey.getEncoded());
 			encryptedKey = CryptoUtil.combineByteArray(encryptedPrivateKey, encryptedSymmetricKey, keySplitter);
 		} else {
-			encryptedKey = ecCryptoOperation.asymmetricEcEncrypt(masterKey, privateKey.getEncoded(), getEcCurveName(masterKey));
+			encryptedKey = ecCryptomanagerService.asymmetricEcEncrypt(masterKey, privateKey.getEncoded(), getEcCurveName(masterKey));
 		}
 		return encryptedKey;
 	}
@@ -358,7 +358,7 @@ public class KeymanagerUtil {
 			// Symmetric decryption (AAD = null)
 			return cryptoCore.symmetricDecrypt(symmetricKey, encryptedData, null);
 		} else {
-			return ecCryptoOperation.asymmetricEcDecrypt(privateKey, key, null, getEcCurveName(publicKey));
+			return ecCryptomanagerService.asymmetricEcDecrypt(privateKey, key, null, getEcCurveName(publicKey));
 		}
 	}
 
@@ -637,11 +637,12 @@ public class KeymanagerUtil {
 
 	private String getSignatureAlgorithm(String keyAlgorithm) {
 
-		if (keyAlgorithm.equals(KeymanagerConstant.EC_KEY_TYPE)) 
+		if (keyAlgorithm.equals(KeymanagerConstant.EC_KEY_TYPE))
 			return ecSignAlgorithm;
-		else if (keyAlgorithm.equals(KeymanagerConstant.ED25519_KEY_TYPE) || 
-				 keyAlgorithm.equals(KeymanagerConstant.ED25519_ALG_OID) || 
-				 keyAlgorithm.equals(KeymanagerConstant.EDDSA_KEY_TYPE)) 
+		else if (keyAlgorithm.equals(KeymanagerConstant.ED25519_KEY_TYPE) ||
+				keyAlgorithm.equals(KeymanagerConstant.ED25519_ALG_OID) ||
+				keyAlgorithm.equals(KeymanagerConstant.EDDSA_KEY_TYPE) ||
+				keyAlgorithm.equals(KeymanagerConstant.X25519_KEY_TYPE))
 			return edSignAlgorithm;
 
 		return signAlgorithm;
@@ -805,20 +806,27 @@ public class KeymanagerUtil {
 	}
 
 	public String getEcCurveName(PublicKey publicKey) {
-	    SubjectPublicKeyInfo subjectPublicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
-	    ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier) subjectPublicKeyInfo.getAlgorithm().getParameters();
-	    String curveName;
-	    if (KeymanagerConstant.EC_SECP256R1_OID.equals(oid.getId())) {
-	        curveName = ECCurves.SECP256R1.name();
-	    } else if (KeymanagerConstant.EC_SECP256K1_OID.equals(oid.getId())) {
-	        curveName = ECCurves.SECP256K1.name();
-	    } else {
-	        throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(
-	            KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorCode(),
-	            KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorMessage()
-	        );
-	    }
-	    return curveName;
+		if (publicKey.getAlgorithm().equals(KeymanagerConstant.ED25519_KEY_TYPE) ||
+				publicKey.getAlgorithm().equals(KeymanagerConstant.EDDSA_KEY_TYPE))
+			return KeymanagerConstant.ED25519_KEY_TYPE;
+
+		if (publicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE) ||
+				publicKey.getAlgorithm().equals(KeymanagerConstant.XDH_ALGORITHM))
+			return KeymanagerConstant.X25519_KEY_TYPE;
+
+		SubjectPublicKeyInfo subjectPublicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.getEncoded());
+		ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier) subjectPublicKeyInfo.getAlgorithm().getParameters();
+		String curveName;
+		if (KeymanagerConstant.EC_SECP256R1_OID.equals(oid.getId())) {
+			curveName = ECCurves.SECP256R1.name();
+		} else if (KeymanagerConstant.EC_SECP256K1_OID.equals(oid.getId())) {
+			curveName = ECCurves.SECP256K1.name();
+		} else {
+			throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(
+					KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorCode(),
+					KeymanagerErrorConstant.NOT_SUPPORTED_CURVE_VALUE.getErrorMessage());
+		}
+		return curveName;
 	}
 
 	public static String getTrimmedValue(String value) {
