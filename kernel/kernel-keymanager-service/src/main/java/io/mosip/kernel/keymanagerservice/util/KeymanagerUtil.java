@@ -616,6 +616,12 @@ public class KeymanagerUtil {
 	
 	public String getCSR(PrivateKey privateKey, PublicKey publicKey, CertificateParameters certParams, String keyAlgorithm) {
 
+		if (privateKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE)
+				|| privateKey.getAlgorithm().equalsIgnoreCase(KeymanagerConstant.XDH_ALGORITHM)) {
+			throw new KeymanagerServiceException(KeymanagerErrorConstant.X25519_KEY_CSR_NOT_SUPPORTED.getErrorCode(),
+					KeymanagerErrorConstant.X25519_KEY_CSR_NOT_SUPPORTED.getErrorMessage());
+		}
+
 		try {
 			X500Principal csrSubject = new X500Principal("CN=" + certParams.getCommonName() + ", OU=" + certParams.getOrganizationUnit() +
 												", O=" + certParams.getOrganization() + ", L=" + certParams.getLocation() +
