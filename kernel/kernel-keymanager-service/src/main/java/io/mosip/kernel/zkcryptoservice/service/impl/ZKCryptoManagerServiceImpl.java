@@ -518,7 +518,7 @@ public class ZKCryptoManagerServiceImpl implements ZKCryptoManagerService, Initi
 		String certificateData = dbKeyStore.get().getCertificateData();
 		X509Certificate x509Cert = (X509Certificate) keymanagerUtil.convertToCertificate(certificateData);
 
-		PrivateKey privateKey = (PrivateKey) cryptomanagerUtil.getEncryptedPrivateKey(keyAliasObj.get().getApplicationId(), Optional.ofNullable(keyAliasObj.get().getReferenceId()), certificateThumbprint)[0];
+		PrivateKey privateKey = (PrivateKey) cryptomanagerUtil.getPrivateKeyForDecryption(keyAliasObj.get().getApplicationId(), Optional.ofNullable(keyAliasObj.get().getReferenceId()), certificateThumbprint)[0];
 		SymmetricKeyRequestDto symmetricKeyRequestDto = new SymmetricKeyRequestDto(pubKeyApplicationId, localDateTimeStamp, pubKeyReferenceId, encRandomKey, true);
 
 		String randomKey = x509Cert.getPublicKey().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA) ? keyManagerService.decryptSymmetricKey(symmetricKeyRequestDto).getSymmetricKey() :

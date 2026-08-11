@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.NamedParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
@@ -111,6 +112,18 @@ public class KeyGeneratorUtils {
 		try {
 			generator = KeyPairGenerator.getInstance(algorithmName, provider);
 			generator.initialize(new ECGenParameterSpec(eccCurve), secureRandom);
+			return generator;
+		} catch (java.security.NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+			throw new NoSuchAlgorithmException(
+					KeyGeneratorExceptionConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorCode(),
+					KeyGeneratorExceptionConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorMessage(), e);
+		}
+	}
+
+	public static KeyPairGenerator getX25519KeyPairGenerator(SecureRandom secureRandom) {
+		try {
+			KeyPairGenerator generator = KeyPairGenerator.getInstance(KeymanagerConstant.X25519_KEY_TYPE, provider);
+			generator.initialize(new NamedParameterSpec(KeymanagerConstant.X25519_KEY_TYPE), secureRandom);
 			return generator;
 		} catch (java.security.NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
 			throw new NoSuchAlgorithmException(

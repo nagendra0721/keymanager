@@ -531,6 +531,62 @@ public class CryptomanagerUtils {
 		}
     }
 
+	/**
+	 * Retrieves the private key used to decrypt an encrypted payload. Base keys are
+	 * selected by the certificate thumbprint embedded in the payload, so key
+	 * rotation and expiry do not prevent decryption of historical data.
+	 */
+	public Object[] getPrivateKeyForDecryption(String appId, Optional<String> refId, String certThumbprint) {
+		if (refId.isEmpty() || refId.get().trim().isEmpty()) {
+			LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY,
+					"Not valid reference Id. Getting private key from HSM.");
+			return getKeyFromHSM(appId, KeymanagerConstant.EMPTY);
+		}
+
+		String referenceId = refId.get();
+		if (isSignatureKeyRefId(appId, referenceId)) {
+			LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY,
+					"Reference Id is present and it is " + referenceId
+							+ " Signature Key ref Id. Getting private key from HSM.");
+			return getKeyFromHSM(appId, referenceId);
+		}
+
+		LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY, KeymanagerConstant.EMPTY,
+				"Reference Id is present. Will get private key from DB store using certificate thumbprint.");
+		io.mosip.kernel.keymanagerservice.entity.KeyStore dbKeyStore = privateKeyDecryptorHelper
+				.getDBKeyStoreData(certThumbprint, appId, referenceId);
+		return privateKeyDecryptorHelper.getKeyObjects(dbKeyStore, false);
+	}
+
+	private Object[] getKeyFromHSM(String appId, String refId) {
+		LocalDateTime localDateTime = DateUtils2.getUTCCurrentDateTime();
+		Map<String, List<KeyAlias>> keyAliasMap = dbHelper.getKeyAliases(appId, refId, localDateTime);
+		List<KeyAlias> currentKeyAliases = keyAliasMap.getOrDefault(KeymanagerConstant.CURRENTKEYALIAS,
+				Collections.emptyList());
+		List<KeyAlias> keyAliases = keyAliasMap.getOrDefault(KeymanagerConstant.KEYALIAS,
+				Collections.emptyList());
+
+		if (currentKeyAliases.isEmpty() && keyAliases.isEmpty()) {
+			LOGGER.error(KeymanagerConstant.SESSIONID, KeymanagerConstant.KEYALIAS, KeymanagerConstant.EMPTY,
+					"No key alias found for appId: " + appId + ", refId: " + refId);
+			throw new NoUniqueAliasException(KeymanagerErrorConstant.NO_UNIQUE_ALIAS.getErrorCode(),
+					KeymanagerErrorConstant.NO_UNIQUE_ALIAS.getErrorMessage());
+		}
+
+		String keyStoreAlias = currentKeyAliases.isEmpty() ? keyAliases.getFirst().getAlias()
+				: currentKeyAliases.getFirst().getAlias();
+		KeyStore.PrivateKeyEntry masterKeyEntry = keyStore.getAsymmetricKey(keyStoreAlias);
+		return new Object[] { masterKeyEntry.getPrivateKey(), masterKeyEntry.getCertificate() };
+	}
+
+	private boolean isSignatureKeyRefId(String appId, String referenceId) {
+		return (appId.equalsIgnoreCase(signApplicationId) && referenceId.equals(certificateSignRefID))
+				|| referenceId.equals(KeyReferenceIdConsts.EC_SECP256K1_SIGN.name())
+				|| referenceId.equals(KeyReferenceIdConsts.EC_SECP256R1_SIGN.name())
+				|| referenceId.equals(KeyReferenceIdConsts.RSA_2048_SIGN.name())
+				|| (referenceId.equals(KeyReferenceIdConsts.ED25519_SIGN.name()) && ed25519SupportFlag);
+	}
+
 	public Object[] getObjects(io.mosip.kernel.keymanagerservice.entity.KeyStore dbKeyStore, PrivateKey masterPrivateKey, PublicKey masterPublicKey) {
 		byte[] decryptedPrivateKey = keymanagerUtil.decryptKey(CryptoUtil.decodeURLSafeBase64(dbKeyStore.getPrivateKey()),
 				masterPrivateKey, masterPublicKey);

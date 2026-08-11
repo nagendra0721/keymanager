@@ -111,6 +111,11 @@ public class KeyGenerator {
 		return generator.generateKeyPair();
 	}
 
+	public KeyPair getX25519KeyPair() {
+		KeyPairGenerator generator = KeyGeneratorUtils.getX25519KeyPairGenerator(getSecureRandom());
+		return generator.generateKeyPair();
+	}
+
 	public PrivateKey buildPrivateKey(byte[] privateKeyData) {
 		return KeyGeneratorUtils.generatePrivate(asymmetricEDKeyAlgorithm, privateKeyData);
 	}

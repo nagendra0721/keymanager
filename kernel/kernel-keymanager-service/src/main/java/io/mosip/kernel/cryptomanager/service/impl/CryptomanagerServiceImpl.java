@@ -370,7 +370,7 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 					encryptedHybridData.length);
 
 			String certThumbprintHex = Hex.toHexString(thumbprint).toUpperCase();
-			PrivateKey privateKey = (PrivateKey) cryptomanagerUtil.getEncryptedPrivateKey(cryptoRequestDto.getApplicationId(),
+			PrivateKey privateKey = (PrivateKey) cryptomanagerUtil.getPrivateKeyForDecryption(cryptoRequestDto.getApplicationId(),
 					Optional.ofNullable(cryptoRequestDto.getReferenceId()), certThumbprintHex)[0];
 
 			byte[] aad = Arrays.copyOfRange(encryptedDataWithIv, 0, CryptomanagerConstant.GCM_AAD_LENGTH);
