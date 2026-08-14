@@ -1329,9 +1329,9 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 		return SignatureConstant.TRUST_NOT_VALID;
 	}
 
-	private void buildX5tS256cache(boolean value, String joseHeader, Certificate certificate) {
+	private void buildX5tS256cache(boolean signatureValid, String joseHeader, Certificate certificate) {
 
-		if (value) {
+		if (signatureValid) {
 			String x5tS256 = X509Util.x5tS256((X509Certificate) certificate);
 
 			if (x5tS256 != null && !certCache.containsKey(cacheKey("X5T", x5tS256))) {
@@ -1352,8 +1352,8 @@ public class SignatureServiceImpl implements SignatureService, SignatureServicev
 
 				if (x5tS256.equals(headerX5tS256)) {
 					cacheCert(cacheKey("X5T", x5tS256), certificate);
-					LOGGER.info(KeymanagerConstant.SESSIONID, KeymanagerConstant.EMPTY,
-							KeymanagerConstant.EMPTY, "x5t#S256 Cache got updated.");
+					LOGGER.info(SignatureConstant.SESSIONID, SignatureConstant.JWT_SIGN,
+							x5tS256, "Certificate added to x5t#S256 cache.");
 				}
 			}
 		}
