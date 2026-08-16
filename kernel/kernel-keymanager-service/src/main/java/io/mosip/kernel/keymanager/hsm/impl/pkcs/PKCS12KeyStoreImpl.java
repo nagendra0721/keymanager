@@ -466,9 +466,9 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 		}
 		X509Certificate x509Cert;
 		if (keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.ED25519_KEY_TYPE)
-				|| keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.EDDSA_KEY_TYPE)
-				|| keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.X25519_KEY_TYPE)
-				|| keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.XDH_ALGORITHM)) {
+				|| keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.EDDSA_KEY_TYPE)
+				|| keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE)
+				|| keyPair.getPrivate().getAlgorithm().equalsIgnoreCase(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.XDH_ALGORITHM)) {
 			try {
 				Provider sunEcProvider = KeyPairGenerator.getInstance(KeymanagerConstant.ED25519_KEY_TYPE).getProvider();
 				x509Cert = CertificateUtility.generateX509Certificate(signPrivateKey, keyPair.getPublic(), certParams,
@@ -495,7 +495,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 			return generateECKeyPair(keyType);
 		else if (KeymanagerConstant.ED25519_KEY_TYPE.equals(keyType))
 			return generateEd25519KeyPair();
-		else if (KeymanagerConstant.X25519_KEY_TYPE.equals(keyType))
+		else if (io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE.equals(keyType))
 			return generateX25519KeyPair();
 			
 		throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(
@@ -540,7 +540,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 
 	private KeyPair generateX25519KeyPair() {
 		try {
-			KeyPairGenerator generator = KeyPairGenerator.getInstance(KeymanagerConstant.X25519_KEY_TYPE);
+			KeyPairGenerator generator = KeyPairGenerator.getInstance(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE);
 			return generator.generateKeyPair();
 		} catch (java.security.NoSuchAlgorithmException e) {
 			throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(

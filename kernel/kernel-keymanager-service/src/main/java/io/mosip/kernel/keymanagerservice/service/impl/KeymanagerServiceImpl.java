@@ -1499,12 +1499,30 @@ public class KeymanagerServiceImpl implements KeymanagerService {
         KeyPairGenerateResponseDto certData = getCertificate(applicationId, referenceId);
         X509Certificate x509Cert = (X509Certificate) keymanagerUtil.convertToCertificate(certData.getCertificate());
         List<? extends Certificate> trustPath = keymanagerUtil.getCertificateTrustPath(x509Cert);
-        String buildTrustPath = PartnerCertificateManagerUtil.buildp7bFile(trustPath.toArray(new Certificate[0]));
+        Certificate[] certificateChain = trustPath == null
+                ? getCertificateChainFromKeyStore(applicationId, referenceId, timeStamp)
+                : trustPath.toArray(new Certificate[0]);
+        String buildTrustPath = PartnerCertificateManagerUtil.buildp7bFile(certificateChain);
 
         CertificateChainResponseDto responseDto = new CertificateChainResponseDto();
         responseDto.setCertificatesTrustPath(buildTrustPath);
         responseDto.setTimestamp(timeStamp);
         return responseDto;
+    }
+
+    private Certificate[] getCertificateChainFromKeyStore(String applicationId, Optional<String> referenceId,
+                                                           LocalDateTime timestamp) {
+        String refId = KeymanagerUtil.getTrimmedValue(referenceId.orElse(null));
+        Map<String, List<KeyAlias>> keyAliasMap = dbHelper.getKeyAliases(applicationId, refId, timestamp);
+        List<KeyAlias> currentKeyAliases = keyAliasMap.get(KeymanagerConstant.CURRENTKEYALIAS);
+
+        if (currentKeyAliases.size() != 1) {
+            throw new NoUniqueAliasException(KeymanagerErrorConstant.NO_UNIQUE_ALIAS.getErrorCode(),
+                    KeymanagerErrorConstant.NO_UNIQUE_ALIAS.getErrorMessage());
+        }
+
+        String alias = currentKeyAliases.get(0).getAlias();
+        return keyStore.getAsymmetricKey(alias).getCertificateChain();
     }
 
     @Override

@@ -836,6 +836,6 @@ public class KeymanagerUtil {
 	}
 
 	public static String getTrimmedValue(String value) {
-		return (value == null || value.trim().isEmpty()) ? KeymanagerConstant.EMPTY : value;
+		return (value == null || value.trim().isEmpty()) ? KeymanagerConstant.EMPTY : value.trim();
 	}
 }
