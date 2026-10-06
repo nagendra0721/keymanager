@@ -85,6 +85,8 @@ public enum KeymanagerErrorConstant {
 
 	RSA_SIGN_REFERENCE_ID_NOT_SUPPORTED("KER-KMS-038", "RSA Sign Reference Id Not Supported for the Application ID."),
 
+	PKIX_PATH_BUILDER_NOT_SUPPORT("KER-KMS-039", "PKIX path builder not supported."),
+
 	INTERNAL_SERVER_ERROR("KER-KMS-500", "Internal server error");
 
 	/**

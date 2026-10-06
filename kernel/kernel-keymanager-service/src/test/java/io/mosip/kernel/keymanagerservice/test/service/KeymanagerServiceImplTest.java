@@ -56,6 +56,9 @@ public class KeymanagerServiceImplTest {
 
     @Before
     public void setUp() {
+        keyStoreRepository.deleteAll();
+        keyAliasRepository.deleteAll();
+
         KeyPairGenerateRequestDto keyPairGenRequestDto = new KeyPairGenerateRequestDto();
         keyPairGenRequestDto.setApplicationId("ROOT");
         keyPairGenRequestDto.setReferenceId("");
@@ -141,17 +144,17 @@ public class KeymanagerServiceImplTest {
         certificate = service.getCertificate("TEST", Optional.of("EC_SECP256R1_SIGN"));
         Assert.assertEquals(certificate.getCertificate(), service.getCertificate("TEST", Optional.of("EC_SECP256R1_SIGN")).getCertificate());
 
-        keyPairGenRequestDto.setApplicationId("KERNEL");
-        keyPairGenRequestDto.setReferenceId("SIGN");
-        service.generateMasterKey("CERTIFICATE", keyPairGenRequestDto);
-        KeyPairGenerateResponseDto certificate2 = service.getCertificate("KERNEL", Optional.of("SIGN"));
-        Assert.assertEquals(certificate2.getCertificate(), service.getCertificate("KERNEL", Optional.of("SIGN")).getCertificate());
-
         keyPairGenRequestDto.setApplicationId("TEST");
         keyPairGenRequestDto.setReferenceId("ED25519_SIGN");
         service.generateECSignKey("CSR", keyPairGenRequestDto);
-        certificate2 = service.getCertificate("TEST", Optional.of("ED25519_SIGN"));
+        KeyPairGenerateResponseDto certificate2 = service.getCertificate("TEST", Optional.of("ED25519_SIGN"));
         Assert.assertEquals(certificate2.getCertificate(), service.getCertificate("TEST", Optional.of("ED25519_SIGN")).getCertificate());
+
+        keyPairGenRequestDto.setApplicationId("KERNEL");
+        keyPairGenRequestDto.setReferenceId("SIGN");
+        service.generateMasterKey("CERTIFICATE", keyPairGenRequestDto);
+        certificate2 = service.getCertificate("KERNEL", Optional.of("SIGN"));
+        Assert.assertEquals(certificate2.getCertificate(), service.getCertificate("KERNEL", Optional.of("SIGN")).getCertificate());
     }
 
     @Test

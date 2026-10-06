@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import javax.crypto.SecretKey;
 
+import io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -91,7 +92,7 @@ public class KeyGenerator {
 	 * @return {@link KeyPair} which contain public and private key
 	 */
 	public KeyPair getAsymmetricKey() {
-		KeyPairGenerator generator = KeyGeneratorUtils.getKeyPairGenerator(asymmetricKeyAlgorithm, asymmetricKeyLength,
+		KeyPairGenerator generator = KeyGeneratorUtils.getKeyPairGenerator(KeymanagerConstant.RSA, asymmetricKeyLength,
 						getSecureRandom());
 		return generator.generateKeyPair();
 	}

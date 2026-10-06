@@ -131,7 +131,12 @@ public class CertificateUtility {
 			long startTime = System.currentTimeMillis();
 			X509CertificateHolder certHolder = certBuilder.build(certContentSigner);
 			LOGGER.debug("sessionId", "CertificateUtility","generateX509Certificate", "HSM interaction time(ms): " + (System.currentTimeMillis() - startTime));
-			return new JcaX509CertificateConverter().getCertificate(certHolder);
+			if (KeymanagerConstant.BC_PROVIDER.equals(providerName)
+					&& !KeymanagerConstant.EDDSA_KEY_TYPE.equals(publicKey.getAlgorithm())
+					&& !KeymanagerConstant.XDH_ALGORITHM.equals(publicKey.getAlgorithm()))
+				return new JcaX509CertificateConverter().setProvider(providerName).getCertificate(certHolder);
+			else
+				return new JcaX509CertificateConverter().getCertificate(certHolder);
 		} catch (OperatorCreationException | NoSuchAlgorithmException | CertificateException | IOException e) {
 			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
 					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);
@@ -157,7 +162,12 @@ public class CertificateUtility {
 			long startTime = System.currentTimeMillis();
 			X509CertificateHolder certHolder = certBuilder.build(certContentSigner);
 			LOGGER.debug("sessionId", "CertificateUtility","generateX509Certificate", "HSM interaction time(ms): " + (System.currentTimeMillis() - startTime));
-			return new JcaX509CertificateConverter().getCertificate(certHolder);
+			if (KeymanagerConstant.BC_PROVIDER.equals(providerName)
+					&& !KeymanagerConstant.EDDSA_KEY_TYPE.equals(publicKey.getAlgorithm())
+					&& !KeymanagerConstant.XDH_ALGORITHM.equals(publicKey.getAlgorithm()))
+				return new JcaX509CertificateConverter().setProvider(providerName).getCertificate(certHolder);
+			else
+				return new JcaX509CertificateConverter().getCertificate(certHolder);
 		} catch (OperatorCreationException | NoSuchAlgorithmException | CertificateException | IOException e) {
 			throw new KeystoreProcessingException(KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorCode(),
 					KeymanagerErrorCode.CERTIFICATE_PROCESSING_ERROR.getErrorMessage() + e.getMessage(), e);

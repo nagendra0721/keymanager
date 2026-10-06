@@ -263,4 +263,6 @@ public class KeymanagerConstant {
 	public static final String GENERATE_RSA_SIGN_KEY = "Request received to generate the RSA Signature Key pair.";
 
 	public static final String BOTH = "BOTH";
+
+	public static final String BC_PROVIDER = "BC";
 }

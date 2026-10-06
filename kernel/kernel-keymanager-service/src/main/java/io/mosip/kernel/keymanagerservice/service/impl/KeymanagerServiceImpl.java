@@ -1712,7 +1712,7 @@ public class KeymanagerServiceImpl implements KeymanagerService {
             }
 
             PrivateKeyEntry signKeyEntry;
-            if (masterPublicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE)) {
+            if (masterPublicKey.getAlgorithm().equals(KeymanagerConstant.X25519_KEY_TYPE) || masterPublicKey.getAlgorithm().equals(KeymanagerConstant.XDH_ALGORITHM)) {
                 String edSignMasterAlias = certificateInfo.getAlias();
                 signKeyEntry = keyStore.getAsymmetricKey(edSignMasterAlias);
             } else {
