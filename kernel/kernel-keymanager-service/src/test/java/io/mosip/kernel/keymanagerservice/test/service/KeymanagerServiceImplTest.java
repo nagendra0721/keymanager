@@ -15,6 +15,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.cache2k.Cache;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -58,6 +60,9 @@ public class KeymanagerServiceImplTest {
     public void setUp() {
         keyStoreRepository.deleteAll();
         keyAliasRepository.deleteAll();
+        Cache<?, ?> keyAliasCache =
+                (Cache<?, ?>) ReflectionTestUtils.getField(dbHelper, "keyAliasCache");
+        keyAliasCache.clear();
 
         KeyPairGenerateRequestDto keyPairGenRequestDto = new KeyPairGenerateRequestDto();
         keyPairGenRequestDto.setApplicationId("ROOT");
@@ -381,7 +386,7 @@ public class KeymanagerServiceImplTest {
                 "A8ECF08AB926EF26DB80E6C1B0DD4E9B9FA8E43A2BEC724F05C1B500D9FED5C2", "AA05CFE5D1AA1B814ABDDFF5FCDF6346CB30E8FA");
         requestDto.setApplicationId("PARTNER");
         requestDto.setReferenceId("test");
-        KeyPairGenerateResponseDto certificate1 = service.getCertificate("TEST", Optional.of(""));
+        KeyPairGenerateResponseDto certificate1 = service.getCertificate("ID_REPO", Optional.of(""));
         requestDto.setCertificateData(certificate1.getCertificate());
         KeymanagerServiceException exception4 = assertThrows(KeymanagerServiceException.class, () -> {
             service.uploadOtherDomainCertificate(requestDto);
