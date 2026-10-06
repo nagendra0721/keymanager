@@ -107,13 +107,6 @@ public class CryptomanagerUtils {
 	@Value("${mosip.kernel.keymanager.jwtEncrypt.validate.json:true}")
 	private boolean confValidateJson;
 
-	/** The sign applicationid. */
-	@Value("${mosip.sign.applicationid:KERNEL}")
-	private String signApplicationid;
-
-	@Value("${mosip.sign-certificate-refid:SIGN}")
-	private String certificateSignRefID;
-
 	/** The key manager. */
 	@Autowired
 	private KeymanagerService keyManager;
@@ -476,9 +469,8 @@ public class CryptomanagerUtils {
 			PrivateKey masterPrivateKey = masterKeyEntry.getPrivateKey();
 			Certificate masterCert = masterKeyEntry.getCertificate();
 			return new Object[] {masterPrivateKey, masterCert};
-
-		} else if ((appId.equalsIgnoreCase(signApplicationid) && refId.isPresent()
-				&& refId.get().equals(certificateSignRefID)) ||
+		} else if ((appId.equalsIgnoreCase(signApplicationId) && refId.isPresent()
+				&& refId.get().equals(signRefId)) ||
 				(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256K1_SIGN.name())) ||
 				(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.EC_SECP256R1_SIGN.name())) ||
 				(refId.isPresent() && refId.get().equals(KeyReferenceIdConsts.ED25519_SIGN.name())
@@ -580,7 +572,7 @@ public class CryptomanagerUtils {
 	}
 
 	private boolean isSignatureKeyRefId(String appId, String referenceId) {
-		return (appId.equalsIgnoreCase(signApplicationId) && referenceId.equals(certificateSignRefID))
+		return (appId.equalsIgnoreCase(signApplicationId) && referenceId.equals(signRefId))
 				|| referenceId.equals(KeyReferenceIdConsts.EC_SECP256K1_SIGN.name())
 				|| referenceId.equals(KeyReferenceIdConsts.EC_SECP256R1_SIGN.name())
 				|| referenceId.equals(KeyReferenceIdConsts.RSA_2048_SIGN.name())

@@ -13,9 +13,10 @@ public interface EcCryptomanagerService {
      * @param data the data to encrypt
      * @param iv the initialization vector (IV) for encryption
      * @param aad additional authenticated data (AAD)
+     * @param curveName the name of the elliptic curve used
      * @return the encrypted data
      */
-    public byte[] asymmetricEcEncrypt(PublicKey publicKey, byte[] data, byte[] iv, byte[] aad, String algorithmName);
+    public byte[] asymmetricEcEncrypt(PublicKey publicKey, byte[] data, byte[] iv, byte[] aad, String curveName);
 
     /**
      *
