@@ -489,7 +489,7 @@ public class CryptomanagerUtils {
 			io.mosip.kernel.keymanagerservice.entity.KeyStore dbKeyStore = privateKeyDecryptorHelper.getDBKeyStoreData(certThumbprint,
 					appId, referenceId);
 			if (dbKeyStore.getAlias().isEmpty()) {
-				LOGGER.error(KeymanagerConstant.SESSIONID, KeymanagerConstant.KEYFROMDB, dbKeyStore.toString(),
+				LOGGER.error(KeymanagerConstant.SESSIONID, KeymanagerConstant.KEYFROMDB, KeymanagerConstant.EMPTY,
 						"Key in DBStore does not exist for this alias. Throwing exception");
 				throw new NoUniqueAliasException(KeymanagerErrorConstant.NO_UNIQUE_ALIAS.getErrorCode(),
 						KeymanagerErrorConstant.NO_UNIQUE_ALIAS.getErrorMessage());
