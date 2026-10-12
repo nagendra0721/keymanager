@@ -511,7 +511,8 @@ public class CryptomanagerServiceImpl implements CryptomanagerService {
 
 		String algorithm = encCertificate.getPublicKey().getAlgorithm().equalsIgnoreCase(KeymanagerConstant.RSA)
 				? KeymanagerConstant.RSA : keymanagerUtil.getEcCurveName(encCertificate.getPublicKey());
-		if (algorithm.equalsIgnoreCase(ECCurves.SECP256K1.name())) {
+		if (algorithm.equalsIgnoreCase(ECCurves.SECP256K1.name())
+				|| algorithm.equalsIgnoreCase(KeymanagerConstant.ED25519_KEY_TYPE)) {
 			throw new CryptoManagerSerivceException(
 					CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorCode(),
 					String.format(CryptomanagerErrorCode.JWE_ENCRYPTION_NOT_SUPPORTED.getErrorMessage(), algorithm));
