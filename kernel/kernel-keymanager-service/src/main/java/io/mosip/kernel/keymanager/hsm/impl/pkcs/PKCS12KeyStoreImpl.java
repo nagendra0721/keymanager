@@ -495,7 +495,7 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 			return generateRSAKeyPair();
 		else if (ecCurvesList.contains(keyType.toLowerCase()))
 			return generateECKeyPair(keyType);
-		else if (KeymanagerConstant.ED25519_KEY_TYPE.equals(keyType))
+		else if (KeymanagerConstant.ED25519_KEY_TYPE.equalsIgnoreCase(keyType))
 			return generateEd25519KeyPair();
 		else if (io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE.equals(keyType))
 			return generateX25519KeyPair();
