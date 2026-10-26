@@ -11,8 +11,6 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -27,6 +25,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import io.mosip.kernel.core.keymanager.spi.ECKeyStore;
 import io.mosip.kernel.core.util.DateUtils2;
+import io.mosip.kernel.keygenerator.bouncycastle.util.KeyGeneratorUtils;
 import io.mosip.kernel.keymanagerservice.constant.KeyReferenceIdConsts;
 import io.mosip.kernel.keymanagerservice.constant.KeymanagerErrorConstant;
 import io.mosip.kernel.keymanagerservice.entity.KeyAlias;
@@ -580,22 +579,14 @@ public class CryptomanagerUtils {
 	}
 
 	public Object[] getObjects(io.mosip.kernel.keymanagerservice.entity.KeyStore dbKeyStore, PrivateKey masterPrivateKey, PublicKey masterPublicKey) {
-		byte[] decryptedPrivateKey = keymanagerUtil.decryptKey(CryptoUtil.decodeURLSafeBase64(dbKeyStore.getPrivateKey()),
-				masterPrivateKey, masterPublicKey);
+        byte[] decryptedPrivateKey = keymanagerUtil.decryptKey(CryptoUtil.decodeURLSafeBase64(dbKeyStore.getPrivateKey()),
+                masterPrivateKey, masterPublicKey);
 
-		PublicKey publicKey = keymanagerUtil.convertToCertificate(dbKeyStore.getCertificateData()).getPublicKey();
-		String algorithmName = publicKey.getAlgorithm();
-        KeyFactory keyFactory = null;
-		PrivateKey privateKey = null;
-        try {
-            keyFactory = KeyFactory.getInstance(algorithmName);
-            privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(decryptedPrivateKey));
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        Certificate certificate = keymanagerUtil.convertToCertificate(dbKeyStore.getCertificateData());
-		return new Object[]{privateKey, certificate};
-	}
+		Certificate certificate = keymanagerUtil.convertToCertificate(dbKeyStore.getCertificateData());
+        String algorithmName = certificate.getPublicKey().getAlgorithm();
+        PrivateKey privateKey = KeyGeneratorUtils.generatePrivate(algorithmName, decryptedPrivateKey);
+        return new Object[]{privateKey, certificate};
+    }
 
 	public byte[] getHeaderByte(String ecCurveName) {
 		byte[] headerBytes = new byte[0];

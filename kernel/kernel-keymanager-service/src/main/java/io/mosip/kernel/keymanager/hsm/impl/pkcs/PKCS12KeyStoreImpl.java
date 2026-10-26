@@ -31,6 +31,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.NamedParameterSpec;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -541,9 +542,12 @@ public class PKCS12KeyStoreImpl implements ECKeyStore {
 
 	private KeyPair generateX25519KeyPair() {
 		try {
-			KeyPairGenerator generator = KeyPairGenerator.getInstance(io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE);
+			String x25519KeyType = io.mosip.kernel.keymanagerservice.constant.KeymanagerConstant.X25519_KEY_TYPE;
+			// Pinned to SunEC (not the class's BouncyCastle provider) to match generateEd25519KeyPair:
+			KeyPairGenerator generator = KeyPairGenerator.getInstance(x25519KeyType, KeymanagerConstant.SUNEC_PROVIDER);
+			generator.initialize(new NamedParameterSpec(x25519KeyType), secureRandom);
 			return generator.generateKeyPair();
-		} catch (java.security.NoSuchAlgorithmException e) {
+		} catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
 			throw new io.mosip.kernel.core.exception.NoSuchAlgorithmException(
 					KeyGeneratorExceptionConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorCode(),
 					KeyGeneratorExceptionConstant.MOSIP_NO_SUCH_ALGORITHM_EXCEPTION.getErrorMessage(), e);
