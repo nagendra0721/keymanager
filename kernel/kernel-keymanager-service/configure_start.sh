@@ -44,4 +44,5 @@ if [ -n "$spring_config_name_env" ]; then
   spring_args="-Dspring.cloud.config.name=${spring_config_name_env}"
 fi
 
+export spring_args
 exec "$@"
