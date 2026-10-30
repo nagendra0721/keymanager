@@ -47,7 +47,7 @@ ENV spring_config_name_env=${spring_config_name}
 ENV artifactory_url_env=${artifactory_url}
 
 # environment variable to pass hsm client zip file path, at docker runtime
-ENV zip_file_path=${hsm_client_zip_path}
+ENV hsm_zip_file_path=${hsm_client_zip_path}
 
 # creating folder to copy additional supporting jar files required at run-time.
 #RUN mkdir /additional-jars
